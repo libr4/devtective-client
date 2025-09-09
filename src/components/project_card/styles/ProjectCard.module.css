@@ -1,0 +1,5 @@
+.clickEffect {
+    transform: scale(1.09);
+    box-shadow: 2px 8px 16px #00796b;
+    transition: transform 0.3s, box-shadow 0.4s;
+}
