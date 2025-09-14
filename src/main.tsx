@@ -6,24 +6,22 @@ import App from './App.jsx'
 // import TaskExample, { action, getHello } from './components/NewTaskForm.js';
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import TestPage from './pages/TestPage.js';
-import Login from './pages/Login.js';
+import Login from './pages/auth/Login.js';
 import SearchTaskForm from './components/SearchTaskForm.js';
 import CreateTaskPage from './pages/CreateTaskPage.js';
 import SearchTaskPage from './pages/SearchTaskPage.js';
-import { loginAction } from './pages/Login.js';
 import ErrorPage from './pages/ErrorPage.js';
-import Register, { registerAction } from './pages/Register.js';
+import Register, { registerAction } from './pages/auth/RegisterSecond.js';
 import ProjectPage from './pages/ProjectPage.js';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
-import TaskGrid from './components/TaskGrid.js';
-import CollapsibleTable from './components/CollapsibleTable.js';
-import ExampleTable from './components/ExampleTable.js';
 import TaskPage from './pages/TaskPage.js';
-import TaskView from './components/TaskView.js';
 import TaskViewPage from './pages/TaskViewPage.js';
 import NewProjectPage from './pages/NewProjectPage.js';
 import TaskActivityPage from './pages/TaskActivityPage.js';
+import AppProvider from './context/AppProvider.js';
+import UserSettingsPage from './pages/user_edit_profile/UserSettingsPage.js';
+import UserPublicProfilePage from './pages/UserPublicProfilePage.js';
 
 const root = document.getElementById('root') as HTMLElement;
 
@@ -45,6 +43,8 @@ const router = createBrowserRouter([
       { path: ":projectId/tasks", element: <SearchTaskPage /> },
       { path: ":projectId/task/:taskId/atividades", element: <TaskActivityPage /> },
       { path: "projetos", element: <ProjectPage /> },
+      { path: "user/settings", element: <UserSettingsPage /> },
+      { path: "user/profile", element: <UserPublicProfilePage /> },
       { path: "novo-projeto", element: <NewProjectPage /> },
       { path: ":projectId/nova_tarefa", element: <CreateTaskPage /> },
       { path: ":projectId/task/:taskId", element: <TaskViewPage /> },
@@ -57,6 +57,8 @@ const router = createBrowserRouter([
 
 ReactDOM.createRoot(root).render(
   <QueryClientProvider client={queryClient}>
-    <RouterProvider router={router} />
+    <AppProvider>
+      <RouterProvider router={router} />
+    </AppProvider>
   </QueryClientProvider>
 );

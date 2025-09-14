@@ -42,7 +42,7 @@ const theme = createTheme({
  * ----------------*/
 type Task = {
   _id: string;
-  taskId: string | number;
+  taskNumber: string | number;
   title: string;
   type: string;
   priority: string;
@@ -215,7 +215,7 @@ export default function TaskViewSecond() {
           }}
         >
           <Typography variant="h5" fontWeight={700} gutterBottom>
-             #{task.taskId} - {task.title}
+             #{task.taskNumber} - {task.title}
           </Typography>
           <Typography variant="body2" color="text.secondary">
             Clique em um campo para editar. Use “Lançar movimentação” para salvar nota e

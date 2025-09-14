@@ -12,14 +12,14 @@
 // import { GiSmokingPipe } from 'react-icons/gi';
 // import { useState } from 'react';
 // import { Form, redirect, useNavigate } from 'react-router-dom';
-import cover from '../assets/detective.jpg'
+import cover from '../../assets/detective.jpg'
 // import axios from 'axios';
 // import { useMutation } from '@tanstack/react-query';
 
 // SignIn.tsx
 import * as React from "react";
 import { useState } from "react";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Form, redirect, Link as RouterLink, useNavigate } from "react-router-dom";
 import axios from "axios";
 import {
   Alert,
@@ -38,6 +38,7 @@ import {
   createTheme,
 } from "@mui/material";
 import { GiSmokingPipe } from "react-icons/gi";
+import Copyright from './components/Copyright';
 
 /** --------------------------------
  *  Theme (module scope, no re-create)
@@ -61,33 +62,17 @@ interface LoginData {
   password: string;
 }
 
-/** --------------------------------
- *  Small presentational component
- * --------------------------------*/
-function Copyright(props: React.ComponentProps<typeof Typography>) {
-  return (
-    <Typography
-      variant="body2"
-      color="text.secondary"
-      align="center"
-      {...props}
-      sx={{ ...(props.sx ?? {}) }}
-    >
-      {"Copyright © "}
-      <Link
-        color="inherit"
-        href="https://devtective.com"
-        target="_blank"
-        rel="noopener noreferrer"
-      >
-        Devtective
-      </Link>{" "}
-      {new Date().getFullYear()}
-      {"."}
-    </Typography>
-  );
-}
-
+  export async function registerAction({request}) {
+    try {
+      const formData = await request.formData();
+      const data = Object.fromEntries(formData);
+      console.log(data)
+      await axios.post('/api/v1/auth/register', data);
+      return redirect('/login');
+    } catch (error) {
+      return error;
+    }
+  }
 /** --------------------------------
  *  Page
  * --------------------------------*/
@@ -159,10 +144,11 @@ export default function SignIn() {
             elevation={6}
             sx={{
               width: "100%",
-              p: { xs: 3, md: 4 },
+              px: { xs: 3, md: 4 },
+              py: { xs: 1, md: 1 },
               borderRadius: 3,
-              bgcolor: "rgba(255,255,255,0.2)",
-              // backdropFilter: "blur(3px)",
+              bgcolor: "rgba(255,255,255,0.4)",
+              backdropFilter: "blur(25px)",
             }}
           >
             <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center" }}>
@@ -180,9 +166,10 @@ export default function SignIn() {
                 </Alert>
               )}
 
-              <Box
+              <Form
                 component="form"
-                onSubmit={handleSubmit}
+                method='POST' 
+                //onSubmit={handleSubmit}
                 noValidate
                 sx={{ mt: 1, width: "100%" }}
                 aria-label="Formulário de login"
@@ -192,11 +179,51 @@ export default function SignIn() {
                   margin="normal"
                   required
                   fullWidth
+                  id="fullName"
+                  label="Nome"
+                  name="fullName"
+                  autoComplete="fullName"
+                  autoFocus
+                  variant="filled"
+                  InputProps={{ disableUnderline: true }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      borderRadius: 1.5,
+                      boxShadow: 1,
+                      bgcolor: "common.white",
+                    },
+                  }}
+                />
+                <TextField
+                  size="small"
+                  margin="normal"
+                  required
+                  fullWidth
                   id="username"
                   label="Usuário"
                   name="username"
                   autoComplete="username"
-                  autoFocus
+                  // autoFocus
+                  variant="filled"
+                  InputProps={{ disableUnderline: true }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      borderRadius: 1.5,
+                      boxShadow: 1,
+                      bgcolor: "common.white",
+                    },
+                  }}
+                />
+                <TextField
+                  size="small"
+                  margin="normal"
+                  required
+                  fullWidth
+                  id="email"
+                  label="Email"
+                  name="email"
+                  autoComplete="email"
+                  // autoFocus
                   variant="filled"
                   InputProps={{ disableUnderline: true }}
                   sx={{
@@ -246,12 +273,12 @@ export default function SignIn() {
                     </Link>
                   </Grid>
                   <Grid item>
-                    <Link component={RouterLink} to="/register" variant="body2">
-                      {"Criar conta"}
+                    <Link component={RouterLink} to="/login" variant="body2">
+                      {"Faça o LOGIN"}
                     </Link>
                   </Grid>
                 </Grid>
-              </Box>
+              </Form>
 
               <Copyright sx={{ mt: 3 }} />
             </Box>

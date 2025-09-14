@@ -1,482 +1,470 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import IconButton from '@mui/material/IconButton';
-import Input from '@mui/material/Input';
-import FilledInput from '@mui/material/FilledInput';
-import OutlinedInput from '@mui/material/OutlinedInput';
-import InputLabel from '@mui/material/InputLabel';
-import InputAdornment from '@mui/material/InputAdornment';
-import FormHelperText from '@mui/material/FormHelperText';
-import FormControl from '@mui/material/FormControl';
-import TextField from '@mui/material/TextField';
-import Visibility from '@mui/icons-material/Visibility';
-import VisibilityOff from '@mui/icons-material/VisibilityOff';
-import Typography from '@mui/material/Typography';
-import { Autocomplete, Button, Divider, FormControlLabel, MenuItem, Select, Stack, createTheme } from '@mui/material';
-import { ThemeProvider } from '@emotion/react';
-import { useState } from 'react';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import dayjs from 'dayjs';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs'
-import AdapterDateFns from '@mui/lab/AdapterDateFns';
-// import { DatePicker } from '@mui/lab';
-// import ptLocale from 'date-fns/locale/pt';
+import * as React from "react";
+import {
+  Alert,
+  Autocomplete,
+  Box,
+  Button,
+  Chip,
+  Container,
+  Divider,
+  Grid,
+  Paper,
+  Stack,
+  TextField,
+  Tooltip,
+  Typography,
+} from "@mui/material";
+import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
-import axios from 'axios';
-import { Form, useNavigate, useParams } from 'react-router-dom';
-import { useMutation, useQuery } from '@tanstack/react-query';
-import { useAppContext } from '../context/AppProvider';
+import { Form } from "react-router-dom";
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import axios from "axios";
 
-export function getHello(e) {
-    e.preventDefault();
-    // console.log(test)
-    return null;
-}
-  const dicionario = {
-    title:'Título',
-    type:'Tipo',
-    priority:'Prioridade',
-    description:'Descrição',
-    assignedTo:'Atribuído para',
-    status:'Andamento',
-    technology:'Tecnologia',
-    deadline:'Prazo',
-  }
-
-
-function validateRequired(data) {
-  const fields:string[] = [];
-  for (let property in data) {
-    if (data[property] === '') {
-      fields.push(dicionario[property])
-    }
-  }
-  return fields;
-}
-
-export default function NewProjectForm({setValidation}) {
-
-  interface NewProject {
-    members:string[]
-    leader:string[]
-
-  }
-  const navigate = useNavigate();
-  const {projectId} = useParams();
-  const newProjectMutation = useMutation({
-    mutationFn: async (data:NewProject) => {
-      try {
-        const response = await axios.post(`/api/v1/projects`, data);
-        return response.data;
-        
-      } catch (error) {
-        return error;
-      }
-    },
-    onError:(error) => console.log(error)
-    // onSuccess:(data) => navigate(`/${projectId}/task/${data?.data?.taskId}`, {state:data.data}),
-  })
-
-  const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    const formData = new FormData(event.currentTarget);
-    const data:NewProject = Object.fromEntries(formData) as unknown as NewProject;
-    // delete data['assignedTo'];
-    // const requiredError = validateRequired(data);
-    // if (requiredError.length) return setValidation(`Preencha o(s) campos: ${requiredError.join(', ')}`)
-    data.members = members;
-    data.leader = leaders;
-    newProjectMutation.mutate(data);
-  };
-
-  // const [test, setTest] = useState('')
-  // console.log("this is test value: ", test);
-
-  const LABEL_WIDTH = 120;
-  const LABEL_WIDTH_2 = 90;
-
-
-const primary = {
-  main: '#00796b',           // Main teal color
-  light: '#48a999',          // Lighter shade of the main color
-  dark: '#004c40',           // Darker shade of the main color
-  contrastText: '#ffffff'    // White text contrasts well with the main color
+type User = {
+  _id: string;        // using your current id for now
+  name: string;
+  username?: string;
+  email?: string;
+  avatarUrl?: string;
 };
 
-  const theme = createTheme({
-    palette: {
-      primary,
-      // secondary: purple,
+type Workspace = {
+  id: string;         // public UUID preferred; maps from backend (publicId or id)
+  name: string;
+};
+
+type CreateProjectPayload = {
+  name: string;
+  description?: string;
+  start?: string | null;
+  end?: string | null;
+  leaderIds: string[];
+  memberIds: string[];
+  workspaceId: string; // NEW: required
+};
+
+type CreateProjectResponse = {
+  id?: string;
+  projectId?: string;
+  name: string;
+};
+
+export default function NewProjectPage() {
+  const qc = useQueryClient();
+
+  const [leaders, setLeaders] = React.useState<string[]>([]);
+  const [members, setMembers] = React.useState<string[]>([]);
+  const [start, setStart] = React.useState<Dayjs | null>(null);
+  const [end, setEnd] = React.useState<Dayjs | null>(null);
+  const [name, setName] = React.useState("");
+  const [description, setDescription] = React.useState("");
+  const [validation, setValidation] = React.useState<string | null>(null);
+
+  // NEW: workspace state
+  const [selectedWs, setSelectedWs] = React.useState<Workspace | null>(null);
+  const [newWsName, setNewWsName] = React.useState("");
+  const [wsInput, setWsInput] = React.useState("");
+  const [createdWs, setCreatedWs] = React.useState(false);
+
+  // --- Queries ---------------------------------------------------------------
+  const usersQuery = useQuery({
+    queryKey: ["users-for-project"],
+    queryFn: async () => {
+      const res = await axios.get<User[]>("/api/v1/users", { withCredentials: true });
+      return res.data.filter((u) => !!u.name);
     },
   });
 
-  const allUsersQuery = useQuery({
-    queryKey:['novo-projeto'],
+  const meQuery = useQuery({
+    queryKey: ["current-user"],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/users')
-      return response.data;
-    }
-  })
+      const res = await axios.get<User>("/api/v1/users/me", { withCredentials: true });
+      return res.data;
+    },
+  });
 
-  const currentUserQuery = useQuery({
-    queryKey:['current-user'],
+  // NEW: workspaces list (owned/visible to the user)
+  const workspacesQuery = useQuery({
+    queryKey: ["workspaces"],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/users/current-user');
-      
-      return response.data;
+      const res = await axios.get<Array<{ id?: string; publicId?: string; name: string }>>(
+        "/api/v1/workspaces/me",
+        { withCredentials: true }
+      );
+      // normalize id field to .id (prefer publicId)
+      return res.data.map((w) => ({ id: w.publicId ?? w.id!, name: w.name })) as Workspace[];
+    },
+  });
+
+  // Ensure current user is leader by default
+  React.useEffect(() => {
+    const me = meQuery.data?._id;
+    if (me && leaders.length === 0) setLeaders([me]);
+  }, [meQuery.data, leaders.length]);
+
+  // Preselect a workspace (PUBLIC_DEMO if present; else first)
+  React.useEffect(() => {
+    const list = workspacesQuery.data ?? [];
+    if (!selectedWs && list.length) {
+      const demo =
+        list.find((w) => w.name === "PUBLIC_DEMO") ||
+        list.find((w) => /demo/i.test(w.name));
+      setSelectedWs(demo || list[0]);
     }
-  })
+  }, [workspacesQuery.data, selectedWs]);
 
-  const [members, setMembers] = useState<string[]>([]);
-  const [leaders, setLeaders] = useState<string[]>([]);
+  // --- Mutations -------------------------------------------------------------
+  const createMutation = useMutation({
+    mutationKey: ["create-project"],
+    mutationFn: async (payload: CreateProjectPayload) => {
+      const res = await axios.post<CreateProjectResponse>("/api/v1/projects", payload, {
+        withCredentials: true,
+      });
+      return res.data;
+    },
+    onError: (err: any) => {
+      console.error(err);
+      setValidation("Ocorreu um erro ao criar o projeto. Tente novamente.");
+    },
+    onSuccess: () => {
+      setValidation(null);
+      // navigate after success if you want
+    },
+  });
 
+  // NEW: create workspace inline
+  const createWorkspaceMutation = useMutation({
+    mutationKey: ["create-workspace"],
+    mutationFn: async (name: string) => {
+      console.log('MUTATION TRIGGERED!')
+      const res = await axios.post<{ id?: string; publicId?: string; name: string }>(
+        "/api/v1/workspaces",
+        { name },
+        { withCredentials: true }
+      );
+      return { id: res.data.publicId ?? res.data.id!, name: res.data.name } as Workspace;
+    },
+    onSuccess: async (ws) => {
+      setSelectedWs(ws);
+      setNewWsName("");
+      setCreatedWs(true)
+      await qc.invalidateQueries({ queryKey: ["workspaces"] });
+    },
+    onError: () => setValidation("Não foi possível criar o workspace."),
+  });
+
+  // --- Helpers ---------------------------------------------------------------
+  const allUsers = usersQuery.data ?? [];
+  const currentUserId = meQuery.data?._id;
+
+  const leaderOptions = allUsers;
+  const memberOptions = allUsers;
+
+  const leaderValue = leaderOptions.filter((u) => leaders.includes(u._id));
+  const memberValue = memberOptions.filter((u) => members.includes(u._id));
+
+  const usersLoading = usersQuery.isLoading;
+  const creating = createMutation.isPending;
+  const wsLoading = workspacesQuery.isLoading || createWorkspaceMutation.isPending;
+
+  function ensureSelfIsLeader(nextIds: string[]) {
+    if (!currentUserId) return nextIds;
+    return nextIds.includes(currentUserId) ? nextIds : [currentUserId, ...nextIds];
+  }
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    if (!name.trim()) {
+      setValidation("Preencha o campo: Título");
+      return;
+    }
+    if (!selectedWs) {
+      setValidation("Selecione ou crie um Workspace.");
+      return;
+    }
+    if (!leaders.length || (currentUserId && !leaders.includes(currentUserId))) {
+      setValidation("Você deve ser um(a) dos(as) líderes do projeto.");
+      setLeaders((prev) => ensureSelfIsLeader(prev));
+      return;
+    }
+    if (end && start && end.isBefore(start)) {
+      setValidation("A data de fim deve ser posterior à data de início.");
+      return;
+    }
+
+    const payload: CreateProjectPayload = {
+      name: name.trim(),
+      description: description.trim() || undefined,
+      start: start ? start.toDate().toISOString() : null,
+      end: end ? end.toDate().toISOString() : null,
+      leaderIds: Array.from(new Set(ensureSelfIsLeader(leaders))),
+      memberIds: Array.from(new Set(members)),
+      workspaceId: selectedWs.id, // NEW
+    };
+
+    createMutation.mutate(payload);
+  }
+
+  function handleCopyInviteLink() {
+    const link = "https://app.devtective.io/invite/coming-soon";
+    navigator.clipboard.writeText(link);
+    setValidation("Link de convite copiado (funcionalidade em breve).");
+  }
+
+  // --- UI --------------------------------------------------------------------
   return (
-
-  <ThemeProvider theme={theme}>
-  <Form
-    onSubmit={handleSubmit}
-    // component={'form'}
-    method='post'>
-    <Box 
-      id="form_wrapper"
-      sx={{ 
-        overflow:'auto',
-        // background:'#C8C8C8',
-        display: 'grid',
-        alignItems:'center',
-        // mt:10, ml:2,
-        width:'100%' ,
-        gap:'10px'
-      }}
-    >
-      
-       {/* Linha um do form */}
-      <Box id="form_linha_um"
-          sx={
-            {
-              display:'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)', /* Creates 4 equal columns */
-            }
-          }
-      >
-        <Box
-          id="input_titulo"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            alignContent:'left',
-            gridColumn:'span 3'
-          }}
-        >
-          <Typography
-          align='right'
-          sx={
-            {
-              width:LABEL_WIDTH
-            }
-          }
-          >
-            Título:&nbsp;&nbsp;
+    <LocalizationProvider adapterLocale="pt-br" dateAdapter={AdapterDayjs}>
+      <Container maxWidth="md" disableGutters sx={{ m: 0 }}>
+        <Paper elevation={3} sx={{ p: { xs: 2, sm: 3 }, borderRadius: 3 }}>
+          <Typography variant="h5" fontWeight={600} gutterBottom>
+            Novo Projeto
           </Typography>
-          <TextField 
-          // required
-            name='name'
-            size='small'
-            // fullWidth
-            sx={{
-              width:'90%'
-            }}/>
-        </Box>
-      </Box>
-      <Divider></Divider>
-      {/* Fim da linha dois do form */}
 
-      {/* Linha três do form */}
-      <Box id="form_linha_dois"
-        sx={
-          {
-            display:'grid',
-            gridTemplateColumns: 'repeat(4, 1fr)', /* Creates 4 equal columns */
-            // width:'auto'
-          }
-        }
-      >
-        <Box
-          id="input_descricao"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            alignContent:'left',
-            gridColumn:'span 3'
-          }}
-        >
-          <Typography
-          align='right'
-          sx={
-            {
-              width:LABEL_WIDTH
+          {validation && (
+            <Alert severity="error" onClose={() => setValidation(null)} sx={{ mb: 2 }}>
+              {validation}
+            </Alert>
+          )}
 
-            }
-          }
-          >
-            Descrição:&nbsp;&nbsp;
-          </Typography>
-          <TextField 
-          name='description'
-          size='small'
-          multiline
-          // fullWidth
-          rows={5}
-          sx={{
-            width:'90%'
-          }}/>
-        </Box>
-      </Box>
-      {/* Fim da linha três do form */}
+          <Form onSubmit={handleSubmit} method="post">
+            <Stack spacing={3}>
+              {/* Informações básicas */}
+              <Box>
+                <Divider sx={{ mt: 0.5, mb: 2 }} />
+                <Grid container spacing={2}>
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Título*"
+                      name="name"
+                      value={name}
+                      onChange={(e) => setName(e.target.value)}
+                      fullWidth
+                      size="small"
+                    />
+                  </Grid>
 
-        {/* Linha quatro do form */}
-        <Box id="form_linha_quatro"
-          sx={
-            {
-              display:'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)', /* Creates 4 equal columns */
-            }
-          }
-      >
-        <Box
-          id="input_tipo"
-          sx={{
-            display:'flex',
-            
-            alignItems:'center',
-            alignContent:'left',
-            gridColumn:'span 2'
-          }}
-        >
-          <Typography
-            align='right'
-            sx={
-              {
-                width:LABEL_WIDTH
-              }
-            }
-          >
-            Líder/Gerente:&nbsp;&nbsp;
-          </Typography>
-          {allUsersQuery.isLoading ? 
-          
-          <Typography>Carregando...</Typography> : 
-          allUsersQuery.data ?
-          <Stack
-            sx={{ 
-              minWidth: '50%', 
-              maxWidth:'50%'
-            }}
-          >
-          <Autocomplete
-            multiple
-            onChange={(e, v:any[]) => setLeaders(v.map(el => el._id))}
-            disableClearable
-            // options={allUsersQuery.data.filter(el => el.name).map(el => el.name)}
-            options={allUsersQuery.isLoading ? [] : allUsersQuery.data.filter(el => el.name)}
-            getOptionLabel={(option:any) => option.name}
-            renderInput={(params) => <TextField name='leader' {...params} size='small' placeholder='Nome(s) do(s) líderes(s)'
-          />}
-          />
-          </Stack>
-          :
-          <Typography>Tente mais tarde.</Typography>
-          }
-        </Box>
-        <Box
-          id="input_inicio"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            gridColumn:3
-          }}
-        >
-          <Typography 
-              align='right'
-              sx={{
-                // width:LABEL_WIDTH/2
-                minWidth:LABEL_WIDTH_2
-              }}>
-              Início:&nbsp;&nbsp;
-          </Typography>
-          <LocalizationProvider 
-          adapterLocale='pt-br'
-          dateAdapter={AdapterDayjs}>
-          <DatePicker 
-              name='start'
-          />
-        </LocalizationProvider>
-        </Box>
-      </Box>
-      {/* Fim da linha quatro do form */}
+                  <Grid item xs={12}>
+                    <TextField
+                      label="Descrição"
+                      name="description"
+                      value={description}
+                      onChange={(e) => setDescription(e.target.value)}
+                      fullWidth
+                      size="small"
+                      multiline
+                      minRows={4}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
 
-      {/* Linha cinco do form */}
-      <Box id="form_linha_um"
-          sx={
-            {
-              display:'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)', /* Creates 4 equal columns */
-            }
-          }
-      >
-        <Box
-          id="input_tipo"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            alignContent:'left',
-            gridColumn:'span 2'
-          }}
-        >
-          <Typography
-          align='right'
-          sx={
-            {
-              width:LABEL_WIDTH
-            }
-          }
-          
-          >
-            Membros:&nbsp;&nbsp;
-          </Typography>
-          {(allUsersQuery.isLoading || currentUserQuery.isLoading) ? 
-          
-          <Typography>Carregando...</Typography> : 
-          allUsersQuery.data ?
-          <Stack
-            sx={{ 
-              minWidth: '50%', 
-              maxWidth:'50%'
-            }}
-          >
-          <Autocomplete
-            multiple
-            onChange={(e, v:any[]) => setMembers(v.map(el => el._id))}
-            disableClearable
-            defaultValue={(allUsersQuery.data.filter(el => el._id === currentUserQuery.data._id)) || {}}
-            // options={allUsersQuery.data.filter(el => el.name).map(el => el.name)}
-            options={allUsersQuery.isLoading ? [] : allUsersQuery.data.filter(el => el.name)}
-            getOptionLabel={(option:any) => option.name}
-            // value={someValue}
-            // disablePortal
-            // sx={{ 
-            //   overflowX:'auto',
-              // minWidth: '100%', width: '100%',}}
-            renderInput={(params) => <TextField name='members' {...params} size='small' placeholder='Nome(s) do(s) membro(s)'
-            sx={{
-              // overflowX:'auto'
-              // gridColumn:'span 3',
-              // width:'90%'
-            }} />}
-          />
-          </Stack>
-          :
-          <Typography>Tente mais tarde.</Typography>
-          }
+              {/* Workspace */}
+              {/* Workspace (one-field + creatable) */}
+              <Box>
+                <Divider sx={{ mt: 0.5, mb: 2 }} />
+                <Grid container spacing={2} alignItems="flex-start">
+                  <Grid item xs={12} md={8}>
+                    <Autocomplete
+                      freeSolo
+                      options={workspacesQuery.data ?? []}
+                      value={selectedWs}
+                      inputValue={wsInput}
+                      onInputChange={(_, v) => {
+                        setWsInput(v);
+                        // if user typed an existing name, auto-select it
+                        const match = (workspacesQuery.data ?? []).find(
+                          (w) => w.name.toLowerCase().trim() === v.toLowerCase().trim()
+                        );
+                        if (match) setSelectedWs(match);
+                      }}
+                      onChange={(_, v) => {
+                        // v can be Workspace | string | null (because freeSolo)
+                        if (v && typeof v !== "string") {
+                          setSelectedWs(v);
+                          setWsInput(v.name);
+                        }
+                      }}
+                      getOptionLabel={(o) => (typeof o === "string" ? o : o?.name ?? "")}
+                      isOptionEqualToValue={(o, v) => o.id === v.id}
+                      loading={workspacesQuery.isLoading || createWorkspaceMutation.isPending}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Workspace*"
+                          placeholder="Selecione ou digite para criar"
+                          size="small"
+                        />
+                      )}
+                      disabled={workspacesQuery.isLoading || createWorkspaceMutation.isPending}
+                    />
+                    {/* <Typography variant="caption" color="text.secondary">
+                      O projeto pertence a um único workspace. Digite para buscar ou criar um novo.
+                    </Typography> */}
+                  </Grid>
 
-          {/* <Select
-            name='status'
-            size='small'
-            defaultValue={status[0]}
-            sx={
-              {
-                width:'50%'
-              }
-            }
-          >
-          {status.map((item) => {
-            return (
-              <MenuItem key={item} value={item}>
-                {item}
-              </MenuItem>
-            )
-          })}
-
-          </Select> */}
-          {/* <TextField 
-            size='small'
-            sx={{
-              width:'50%'
-            }}/> */}
-        </Box>
-        <Box
-          id="input_prazo"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            gridColumn:3
-          }}
-        >
-          <Box>
-            <Typography 
-              align='right'
-              sx={{
-                width:LABEL_WIDTH_2
-              }}>
-              Fim:&nbsp;&nbsp;
-            </Typography>
-          </Box>
-          <LocalizationProvider 
-          adapterLocale='pt-br'
-          dateAdapter={AdapterDayjs}>
-          <DatePicker 
-              name='end'
-          />
-        </LocalizationProvider>
-        </Box>
-      </Box>
-      {/* Fim da linha um do form */}
-
-      {/* Linha seis do form */}
-      <Box id="form_linha_seis"
-          sx={
-            {
-              display:'grid',
-              gridTemplateColumns: 'repeat(4, 1fr)', /* Creates 4 equal columns */
-            }}>
-        <Box
-      
-          id="enviar_tarefa_btn"
-          sx={{
-            display:'flex',
-            alignItems:'center',
-            gridColumn:3
-          }}
-        >
-          <Typography
-           align='right'
-           sx={
-            {
-              width:LABEL_WIDTH_2
-
-            }
-           }
-          >
-            {/* Prioridade:&nbsp;&nbsp; */}
-          </Typography>
-          <Button 
-          // onClick={() => setValidation("button clicked")}
-            size='large'
-            sx={{
-              width:'70%',
-            }}
-            type='submit'
-            variant='contained'>
-              Enviar
-          </Button>
-        </Box>
-      </Box>
-      {/* Fim da linha seis do form */}
+                  <Grid item xs={12} md={4}>
+                    <Button
+                      variant="contained"
+                      size="medium"
+                      fullWidth
+                      onClick={() => {return createWorkspaceMutation.mutate(wsInput.trim())}}
+                      disabled={
+                        createdWs || !wsInput.trim() ||
+                        (workspacesQuery.data ?? []).some(
+                          (w) => w.name.toLowerCase().trim() === wsInput.toLowerCase().trim()
+                        ) ||
+                        createWorkspaceMutation.isPending
+                      }
+                    >
+                      {createdWs ? "Workspace criado!" : createWorkspaceMutation.isPending ? "Criando..." : `Criar “${wsInput || "workspace"}”`}
+                    </Button>
+                    {/* <Typography variant="caption" color="text.secondary">
+                      O botão ativa quando o nome não existe.
+                    </Typography> */}
+                  </Grid>
+                </Grid>
+              </Box>
 
 
-    </Box>
-    </Form>
-    </ThemeProvider>
+              {/* Equipe */}
+              <Box>
+                <Divider sx={{ mt: 0.5, mb: 2 }} />
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={5}>
+                    <Autocomplete
+                      multiple
+                      options={leaderOptions}
+                      value={leaderValue}
+                      getOptionLabel={(o) => o.name || o.username || o.email || "Usuário"}
+                      onChange={(_, value) => {
+                        const next = value.map((v) => v._id);
+                        setLeaders(ensureSelfIsLeader(next));
+                      }}
+                      disableCloseOnSelect
+                      loading={usersQuery.isLoading}
+                      renderTags={(value, getTagProps) =>
+                        value.map((option, index) => {
+                          const isSelf = option._id === currentUserId;
+                          const tagProps = getTagProps({ index });
+                          return (
+                            <Chip
+                              {...tagProps}
+                              key={option._id}
+                              label={option.name}
+                              onDelete={
+                                isSelf && value.length === 1 ? undefined : tagProps.onDelete
+                              }
+                              sx={{ "& .MuiChip-icon": { mr: 0.5 } }}
+                            />
+                          );
+                        })
+                      }
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Líder(es)"
+                          placeholder="Adicionar líder"
+                          size="small"
+                        />
+                      )}
+                      disabled={usersLoading}
+                    />
+                    {/* <Typography variant="caption" color="text.secondary">
+                      Você é líder por padrão. Pelo menos um(a) líder é obrigatório.
+                    </Typography> */}
+                  </Grid>
+
+                  <Grid item xs={12} md={7}>
+                    <Autocomplete
+                      multiple
+                      options={memberOptions}
+                      value={memberValue}
+                      getOptionLabel={(o) => o.name || o.username || o.email || "Usuário"}
+                      onChange={(_, value) => setMembers(value.map((v) => v._id))}
+                      disableCloseOnSelect
+                      loading={usersQuery.isLoading}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Convidar membros (opcional)"
+                          placeholder="Convidar membros"
+                          size="small"
+                        />
+                      )}
+                      disabled={usersLoading}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Datas */}
+              <Box>
+                <Divider sx={{ mt: 0.5, mb: 2 }} />
+                <Grid container spacing={2}>
+                  <Grid item xs={12} md={6}>
+                    <DatePicker
+                      label="Início do Projeto"
+                      value={start}
+                      onChange={(v) => setStart(v)}
+                      slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                    />
+                  </Grid>
+                  <Grid item xs={12} md={6}>
+                    <DatePicker
+                      label="Fim do Projeto"
+                      value={end}
+                      onChange={(v) => setEnd(v)}
+                      minDate={start ?? dayjs().subtract(200, "year")}
+                      slotProps={{ textField: { fullWidth: true, size: "small" } }}
+                    />
+                  </Grid>
+                </Grid>
+              </Box>
+
+              {/* Ações */}
+              <Grid container spacing={2} alignItems="center">
+                <Grid item xs={12} md="auto">
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="large"
+                    disabled={usersLoading || creating || wsLoading}
+                  >
+                    {createMutation.isPending ? "Criando..." : "Criar projeto"}
+                  </Button>
+                </Grid>
+                <Grid item xs={12} md="auto">
+                  <Tooltip
+                    title="Crie o projeto primeiro para liberar o link (funcionalidade em breve)"
+                    arrow
+                  >
+                    <span>
+                      <Button
+                        variant="text"
+                        size="large"
+                        onClick={handleCopyInviteLink}
+                        disabled={creating}
+                      >
+                        Copiar link de convite
+                      </Button>
+                    </span>
+                  </Tooltip>
+                </Grid>
+                {createMutation.isError && (
+                  <Grid item xs={12}>
+                    <Typography color="error" variant="body2">
+                      Não foi possível criar o projeto. Verifique os dados e tente novamente.
+                    </Typography>
+                  </Grid>
+                )}
+              </Grid>
+            </Stack>
+          </Form>
+        </Paper>
+      </Container>
+    </LocalizationProvider>
   );
 }

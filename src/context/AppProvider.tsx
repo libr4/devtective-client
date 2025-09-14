@@ -9,7 +9,7 @@ const AppContext = createContext({} as any);
 export default function AppProvider({children}) {
   const sayHello = () => console.log("Hello context");
   const [projects, setProjects] = useState([]);
-  const [currentProject, setCurrentProject] = useState({});
+  const [currentProject, setCurrentProject] = useState(null);
   const [currentTask, setCurrentTask] = useState({});
   const [currentScreen, setCurrentScreen] = useState('projects');
   const [currentUser, setCurrentUser] = useState('projects');

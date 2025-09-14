@@ -29,11 +29,13 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import ClearAllIcon from "@mui/icons-material/ClearAll";
 import RefreshIcon from "@mui/icons-material/Refresh";
 import CloseIcon from "@mui/icons-material/Close";
+import { useAppContext } from "../context/AppProvider";
 
 type TaskRow = {
-  id: number;                // maps to taskId for DataGrid
-  taskId: number;
+  id: number;                // maps to taskNumber for DataGrid
+  taskNumber: number;
   title: string;
+  description: string;
   priority?: string;
   status?: string;
   type?: string;
@@ -87,6 +89,13 @@ export default function SearchTaskFormSecond() {
   const [searchParams, setSearchParams] = useSearchParams();
   const navigate = useNavigate();
   const location = useLocation();
+  // const {state} = location;
+  // const preservedState = React.useRef(state);
+  const {currentProject, setCurrentProject} = useAppContext();
+  // if (!currentProject) {
+    // setCurrentProject(preservedState.current?.project);
+  // }
+  // console.log("CURRENT PROJECT:", currentProject);
 
   // responsive helpers for column visibility
   const downLg = useMediaQuery("(max-width:1200px)");
@@ -107,6 +116,7 @@ export default function SearchTaskFormSecond() {
 
   // Debounce text search for nicer UX
   const debouncedQ = useDebounced(q, 300);
+
 
   // Keep URL in sync when filters change
   React.useEffect(() => {
@@ -147,9 +157,10 @@ export default function SearchTaskFormSecond() {
       const rows: TaskRow[] = (Array.isArray(res.data) ? res.data : [])
         .filter(Boolean)
         .map((t: any) => ({
-          id: Number(t.taskId ?? t.id),
-          taskId: Number(t.taskId ?? t.id),
+          id: Number(t.taskNumber ?? t.id),
+          taskNumber: Number(t.taskNumber ?? t.id),
           title: t.title ?? "",
+          description: t.description ?? "",
           priority: t.priority ?? "",
           status: t.status ?? "",
           type: t.type ?? "",
@@ -207,7 +218,7 @@ export default function SearchTaskFormSecond() {
 
   // Safer, responsive columns (use flex + minWidth; truncate long cells)
   const columns: GridColDef[] = [
-    { field: "taskId", headerName: "ID", width: 90 },
+    { field: "taskNumber", headerName: "ID", width: 90 },
     { field: "title", headerName: "Título", flex: 1, minWidth: 220 },
     { field: "status", headerName: "Status", minWidth: 110, flex: 0.4 },
     { field: "priority", headerName: "Prioridade", minWidth: 110, flex: 0.4 },
@@ -381,7 +392,7 @@ export default function SearchTaskFormSecond() {
         >
           <DataGrid
             rows={tasksQuery.data ?? []}
-            getRowId={(row) => Number(row.taskId ?? row.id)} // <= guarantees an id
+            getRowId={(row) => Number(row.taskNumber ?? row.id)} // <= guarantees an id
             columns={columns}
             columnVisibilityModel={columnVisibilityModel}
             checkboxSelection
@@ -393,14 +404,14 @@ export default function SearchTaskFormSecond() {
             pageSizeOptions={[10, 25, 50]}
             initialState={{
               pagination: { paginationModel: { page: 0, pageSize: 25 } },
-              sorting: { sortModel: [{ field: "taskId", sort: "asc" }] },
+              sorting: { sortModel: [{ field: "taskNumber", sort: "asc" }] },
             }}
             
             onRowClick={(params, event) => {
               console.log("params:",params)
               const target = event.target as HTMLElement;
               if (target.closest(".MuiCheckbox-root")) return; // don't navigate on checkbox click
-              navigate(`/${projectId}/task/${params.row.taskId}`, { state: params.row });
+              navigate(`/${projectId}/task/${params.row.taskNumber}`, { state: params.row });
             }}
             sx={{
               width: "100%",

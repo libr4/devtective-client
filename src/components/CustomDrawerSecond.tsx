@@ -36,7 +36,7 @@ const primary = {
 };
 const theme = createTheme({ palette: { primary } });
 
-const DRAWER_FULL = 160;   // md and up
+const DRAWER_FULL = 180;   // md and up
 const DRAWER_MINI = 56;    // xs/sm (icons only)
 
 export default function CustomDrawerSecond() {

@@ -14,22 +14,12 @@ import Container from '@mui/material/Container';
 import { createTheme, ThemeProvider } from '@mui/material/styles';
 import { GiSmokingPipe } from 'react-icons/gi';
 import { useState } from 'react';
-import { Form, redirect } from 'react-router-dom';
-import cover from '../assets/detective.jpg'
+import { Form, redirect, Link as RouterLink } from 'react-router-dom';
+import cover from '../../assets/detective.jpg'
 import axios from 'axios';
+import Copyright from './components/Copyright';
+import { Paper } from '@mui/material';
 
-export function Copyright(props: any) {
-  return (
-    <Typography variant="body2" color="text.secondary" align="center" {...props} sx={{zIndex: (theme) => theme.zIndex.drawer + 1,}}>
-      {'Copyright © '}
-      <Link color="inherit" href="https://mui.com/">
-        Devtective
-      </Link>{' '}
-      {new Date().getFullYear()}
-      {'.'}
-    </Typography>
-  );
-}
 
 // TODO remove, this demo shouldn't need to reset the theme.
 const primary = {
@@ -53,7 +43,7 @@ const primary = {
       const data = Object.fromEntries(formData);
       console.log(data)
       await axios.post('/api/v1/auth/register', data);
-      return redirect('/nova_tarefa');
+      return redirect('/login');
     } catch (error) {
       return error;
     }
@@ -86,13 +76,27 @@ export default function SignIn() {
         backgroundSize: "cover",
         width:'100vw',
         height:'100vh',
+        backgroundPosition: { xs: "center", md: "left center", lg:"90% 85%" },
 
       }}
       >
       <Container 
         
-        component="main" maxWidth="xs"
+        component="main"
+          maxWidth="xs"
+          role="main"
+          sx={{
+            ml: "auto",
+            mr: { xs: 2, md: 6, lg: 25 }, // push further right responsively
+            minHeight: "100vh",
+            display: "flex",
+            alignItems: "center",
+            pb: 0,
+          }}
         >
+                <Paper sx={{display:'flex', width:'100%', p:1, 
+                  borderRadius: 3,
+                  bgcolor: "rgba(255,255,255,0.9)",}}>
         <CssBaseline />
         <Box
           sx={{
@@ -115,7 +119,7 @@ export default function SignIn() {
               fullWidth
               id="nome"
               label="Nome"
-              name="nome"
+              name="name"
               autoComplete="email"
               autoFocus
               variant='filled'
@@ -180,14 +184,17 @@ export default function SignIn() {
                 </Link>
               </Grid>
               <Grid item>
-                <Link href="/login" color={'primary.dark'} variant="body2">
+
+                <Link component={RouterLink} to="/login" variant="body2">
+                {/* <Link href="/login" color={'primary.dark'} variant="body2"> */}
                   {"Faça o LOGIN"}
                 </Link>
               </Grid>
             </Grid>
           </Form>
         </Box>
-        <Copyright sx={{ mt: 8, mb: 4 }} />
+        <Copyright sx={{ mt: 2, mb: 1, color:'white', fontWeight:700 }} />
+                </Paper>
       </Container>
       </Box>
       {/* </Form> */}

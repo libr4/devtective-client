@@ -14,6 +14,7 @@ const CARD_ID_PREFIX = 'card_'
 export default function ProjectPage() {
   
   // const [showPassword, setShowPassword] = React.useState(false);
+  const {setCurrentProject} = useAppContext();
 
 
   const {sayHello, setProjects, setCurrentScreen, setCurrentUser, 
@@ -24,6 +25,7 @@ export default function ProjectPage() {
 
   useEffect(() => {
     setCurrentScreen('projects')
+    setCurrentProject(null)
   }, [])
 
 
@@ -61,12 +63,13 @@ const primary = {
   const currentUserQuery = useQuery({
     queryKey:['current-user'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/users/current-user')
+      const response = await axios.get('/api/v1/users/me')
       setCurrentUser(response.data)
       
       return response.data;
     }
   })
+
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
@@ -74,6 +77,7 @@ const primary = {
       if (el && !el.contains(event.target as Node)) {
         setClickedElement(null);
         setCardClicked('');
+        setCurrentProject(null);
       }
     };
     document.addEventListener('click', handleClickOutside, true);
@@ -96,7 +100,7 @@ const primary = {
 
   return (
   <ThemeProvider theme={theme}>
-    <Box sx={{ display: 'flex', flexWrap: 'wrap',  mt:1, ml:1 }}>
+    <Box sx={{ display: 'flex', flexWrap: 'wrap',  mt:0, ml:1 }}>
     <Header title="Projetos"></Header>
     <Box 
       id="form_wrapper"
@@ -116,7 +120,7 @@ const primary = {
       }}
     >
       {projectQuery.data.map((item, index) => {
-        return <ProjectCard id={CARD_ID_PREFIX + item._id} key={item._id} projectKey={item._id} project={item} title={item.name.toUpperCase()} description={item.description}></ProjectCard>
+        return <ProjectCard id={CARD_ID_PREFIX + item._id} key={item._id} projectKey={item.id} project={item} title={item.name.toUpperCase()} description={item.description}></ProjectCard>
       })}
     </Box>
     </Box>

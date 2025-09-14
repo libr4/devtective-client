@@ -24,13 +24,13 @@ type StyledCardProps = {
   id: string;
   title: string;
   description: string;
-  project: { _id: string; memberDetails?: { name: string }[] };
+  project: { id: string; memberDetails?: { name: string }[] };
   projectKey: string;
 };
 
 function ProjectCard({ id, title, description, project, projectKey }: StyledCardProps) {
   const cardRef = React.useRef<HTMLDivElement | null>(null);
-  const { cardClicked, setCardClicked, setClickedElement } = useAppContext();
+  const { cardClicked, setCardClicked, setClickedElement, setCurrentProject } = useAppContext();
   const isCardClicked = cardClicked === projectKey;
   const navigate = useNavigate();
 
@@ -39,7 +39,10 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
       e.preventDefault();            
       setCardClicked(projectKey);
       setClickedElement(cardRef);
+      setCurrentProject(project);
+      return;
     }
+      navigate(`/${project.id}/tasks`, { state: { project } });
   };
 
   const hoverSx = isCardClicked
@@ -57,7 +60,8 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
         id={id}
         ref={cardRef}
         component={Link}
-        to={isCardClicked ? `/${project._id}/tasks` : '#'}
+        state={{project}}
+        // to={isCardClicked ? `/${cardClicked}/tasks` : '#'}
         onClick={handleCardClick}
         role="button"
         sx={{
@@ -65,7 +69,8 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
           outline: 'none',
           maxWidth: 'none',
           mx: { xs: 0, sm: 0, md: 1 },
-          my: 2,
+          mt: 2,
+          mb: 2,
           borderRadius: 2,
           width: '100px',
           minWidth: 0,
@@ -102,7 +107,7 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
             <IconButton
               onClick={(e) => {
                 e.stopPropagation(); // don’t trigger card click
-                navigate(`/${project._id}/alterar`);
+                navigate(`/${project.id}/alterar`);
               }}
               size="small"
               sx={{ color: 'white', '&:hover': { opacity: 0.9 } }}

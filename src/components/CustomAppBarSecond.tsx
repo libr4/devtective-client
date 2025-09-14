@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useMemo } from "react";
-import { Link as RouterLink, useParams } from "react-router-dom";
+import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -18,6 +18,9 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { GiSmokingPipe } from "react-icons/gi";
+import { useAppContext } from "../context/AppProvider";
+import { useQuery } from "@tanstack/react-query";
+import axios from "axios";
 
 /** -----------------------------
  *  Theme (module scope, 1-time)
@@ -35,10 +38,17 @@ const theme = createTheme({
 
 export default function CustomAppBarSecond() {
   const { projectId, taskId } = useParams();
+  const {currentUser, currentProject, setCurrentProject} = useAppContext();
+  // if (currentProject == null) {
+  //   const {state} = useLocation();
+  //   setCurrentProject(state);
+  // }
+  console.log("APP BAR PROJECT:", currentProject)
 
   // Build pages safely (avoid bad links if params are missing)
   const pages = useMemo(
     () => [
+      { label: "Projetos", to: "/projetos", disabled: false },
       { label: "Tarefa", to: "/tarefa", disabled: false },
       {
         label: "Atividades",
@@ -49,12 +59,21 @@ export default function CustomAppBarSecond() {
         disabled: !(projectId && taskId),
       },
       { label: "Chat", to: "#", disabled: true }, // placeholder; wire when ready
-      { label: "Projetos", to: "/projetos", disabled: false },
+      { label: (currentProject ? currentProject.name : "Escolha o projeto"), to: "/projetos", disabled: false },
+      { label: (currentUser ? currentUser.username : "Loading..."), to: "/user/profile", disabled: false },
     ],
-    [projectId, taskId]
+    [projectId, taskId, currentProject, currentUser]
   );
 
-  const settings = useMemo(() => ["Profile", "Account", "Dashboard", "Logout"], []);
+const settings = useMemo(
+  () => [
+    { label: "Profile", to: "/user/profile", disabled: false },
+    { label: "Settings", to: "/user/settings", disabled: false },
+    { label: "Dashboard", to: "/user/dashboard", disabled: false },
+    { label: "Logout", to: "/user/logout", disabled: false },
+  ],
+  []
+);
 
   // Menus
   const [navEl, setNavEl] = React.useState<HTMLElement | null>(null);
@@ -67,14 +86,33 @@ export default function CustomAppBarSecond() {
   const closeUser = () => setUserEl(null);
 
   // (Optional) hook up logout here later
-  const onSettingClick = (setting: string) => {
+  const onSettingClick = () => {
     closeUser();
-    if (setting === "Logout") {
-      // TODO: call your logout flow
+    if (false) {
+      // TODO: call logout flow
     }
   };
 
-  return (
+  const projectQuery = useQuery({
+    queryKey: ["project", projectId],
+    queryFn: async () => {
+      
+      const res = await axios.get(`/api/v1/projects/${projectId}`, { withCredentials: true });
+      console.log("PROJECT QUERY DONE IN APP BAR: ", res.data)
+      return res.data;
+    },
+    retry: 0,
+    enabled:!currentProject,
+  });
+
+  React.useEffect(() => {
+    if (projectQuery.data) {
+      console.log("ASSIGNED CURRENT PROJECT APP BAR")
+      setCurrentProject(projectQuery.data);
+    }
+  }, [projectQuery.data]);
+
+    return (
     <ThemeProvider theme={theme}>
       <AppBar
         position="sticky"
@@ -127,7 +165,7 @@ export default function CustomAppBarSecond() {
                 sx={{ display: { xs: "block", md: "none" } }}
                 MenuListProps={{ "aria-labelledby": "nav-button" }}
               >
-                {pages.map((p) => (
+                {pages.map((p, i) => (
                   <MenuItem
                     key={p.label}
                     onClick={closeNav}
@@ -161,14 +199,18 @@ export default function CustomAppBarSecond() {
 
             {/* Spacer + desktop nav */}
             <Box sx={{ flexGrow: 1, display: { xs: "none", md: "flex" } }}>
-              {pages.map((p) => (
+              {pages.map((p, i) => (
                 <Button
                   key={p.label}
                   component={p.disabled ? "button" : RouterLink}
                   to={p.disabled ? undefined : p.to}
                   onClick={p.disabled ? undefined : closeNav}
                   disabled={p.disabled}
-                  sx={{ my: 1, mr: 1, color: "white" }}
+                  // sx={{ my: 1, mr: 1, color: "white" }}
+                    sx={{
+                      my: 1, mr: 1, color: "white" ,
+                      ml:i === 4 ? "auto": ""
+                    }}
                 >
                   {p.label}
                 </Button>
@@ -198,8 +240,14 @@ export default function CustomAppBarSecond() {
                 sx={{ mt: 1 }}
               >
                 {settings.map((s) => (
-                  <MenuItem key={s} onClick={() => onSettingClick(s)}>
-                    <Typography textAlign="center">{s}</Typography>
+                  <MenuItem
+                    key={s.label}
+                    onClick={() => onSettingClick()}
+                    disabled={s.disabled}
+                    component={RouterLink}
+                    to={s.to}
+                  >
+                    <Typography textAlign="center">{s.label}</Typography>
                   </MenuItem>
                 ))}
               </Menu>

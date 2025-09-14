@@ -1,54 +1,70 @@
-import * as React from 'react';
-import Box from '@mui/material/Box';
-import Typography from '@mui/material/Typography';
-import { Alert, FormControlLabel } from '@mui/material';
-import { useLocaleText } from '@mui/x-date-pickers/internals';
-import { useLocation } from 'react-router-dom';
+import * as React from "react";
+import { Box, Container, Stack, Typography, Alert } from "@mui/material";
+import type { SxProps, Theme } from "@mui/material/styles";
 
-export default function Header(props:any) {
+type HeaderProps = {
+  title: React.ReactNode;
+  /** Optional content for the right side (buttons, chips, etc.) */
+  rightSlot?: React.ReactNode;
+  /** Optional validation/error message shown below the header row */
+  validation?: React.ReactNode;
+  /** Allow consumers to override max width */
+  maxWidth?: false | "xs" | "sm" | "md" | "lg" | "xl";
+  /** Pass-through styling */
+  sx?: SxProps<Theme>;
+  className?: string;
+};
 
-  let {title} = props;
-  const {validation} = props;
-  
-  const [showPassword, setShowPassword] = React.useState(false);
-
-  const handleClickShowPassword = () => setShowPassword((show) => !show);
-
-  const handleMouseDownPassword = (event: React.MouseEvent<HTMLButtonElement>) => {
-    event.preventDefault();
-  };
-
+export default function Header({
+  title,
+  rightSlot,
+  validation,
+  maxWidth = "lg",
+  sx,
+  className,
+}: HeaderProps) {
   return (
-    <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems:'center', maxWidth:'75%', marginLeft:1, pl:1 }}>
-        <Box 
-          sx={{
-            width:'100%',
-            display:'flex',
-            justifyContent:'space-between',
-            flex:1,
-          }}>
+    <Box
+      component="header"
+      role="banner"
+      sx={{
+        position: "relative",      // make z-index apply
+        zIndex: 0,                 // keep it low
+        borderBottom: 1,
+        borderColor: "divider",
+        bgcolor: "background.paper",
+        ...sx,
+        pointerEvents: "none",     // <-- header wrapper won't eat clicks
+      }}
+      className={className}
+    >
+      <Container maxWidth={maxWidth}>
+        <Stack
+          direction="row"
+          alignItems="center"
+          justifyContent="space-between"
+          py={{ xs: 1.5, md: 2 }}
+          spacing={2}
+          sx={{ pointerEvents: "auto" }}   
+        >
           <Typography
-            variant="h6"
-            component="a"
-            href="#app-bar-with-responsive-menu"
-            sx={{
-              mr: 2,
-              display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              // pl:'1.0rem',
-              pb:'1.0rem',
-              pr:'2rem',
-              // letterSpacing: '.3rem',
-              color: 'inherit',
-              textDecoration: 'none',
-            }}
+            variant="h5"
+            component="h1"
+            sx={{ fontWeight: 700, lineHeight: 1.2 }}
           >
             {title}
           </Typography>
-          {validation && <Alert severity='error'>{validation}</Alert>}
-        </Box> 
-          
-  </Box>
+
+          {rightSlot ?? null}
+        </Stack>
+
+        {validation ? (
+          <Alert severity="error" sx={{ mt: 1, pointerEvents: "auto" }}>
+            {validation}
+          </Alert>
+        ) : null}
+      </Container>
+    </Box>
   );
 }
+

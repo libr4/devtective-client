@@ -312,7 +312,7 @@ export default function NewTaskFormSecond({
               </Grid>
 
               {/* Submit */}
-              <Grid item xs={12} md={6} sx={{}}>
+              <Grid item xs={12} md={12} sx={{}}>
                 <Box sx={{ display: "flex", justifyContent: { xs: "stretch", md: "flex-end" } }}>
                   <Button
                     type="submit"
