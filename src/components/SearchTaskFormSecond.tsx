@@ -24,6 +24,7 @@ import { DataGrid, GridColDef } from "@mui/x-data-grid";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useLocation, useNavigate, useParams, useSearchParams } from "react-router-dom";
 import axios from "axios";
+import api from "../api/axios";
 import DeleteIcon from "@mui/icons-material/Delete";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import ClearAllIcon from "@mui/icons-material/ClearAll";
@@ -128,7 +129,7 @@ export default function SearchTaskFormSecond() {
   const filtersQuery = useQuery<FiltersDTO>({
     queryKey: ["project-filters", projectId],
     queryFn: async () => {
-      const res = await axios.get(`/api/v1/projects/${projectId}/filters`, { withCredentials: true });
+      const res = await api.get(`/api/v1/projects/${projectId}/filters`, { withCredentials: true });
       return res.data;
     },
     retry: 0,
@@ -142,7 +143,7 @@ export default function SearchTaskFormSecond() {
       { q: debouncedQ, assignedTo, type, priority, status, technology },
     ],
     queryFn: async () => {
-      const res = await axios.get(`/api/v1/projects/${projectId}/tasks`, {
+      const res = await api.get(`/api/v1/projects/${projectId}/tasks`, {
         withCredentials: true,
         params: {
           q: debouncedQ || undefined,
@@ -183,7 +184,7 @@ export default function SearchTaskFormSecond() {
 
   const deleteMutation = useMutation({
     mutationFn: async (ids: number[]) =>
-      axios.delete(`/api/v1/projects/${projectId}/tasks`, { withCredentials: true, data: ids }),
+      api.delete(`/api/v1/projects/${projectId}/tasks`, { withCredentials: true, data: ids }),
     onSuccess: () => {
       setSelection([]);
       tasksQuery.refetch();

@@ -22,6 +22,7 @@ import { useState, useMemo, useEffect } from "react";
 import { useAppContext } from "../../context/AppProvider";
 import { useIsMutating, useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../../api/axios";
 import UserDataCard from "./UserDataCard";
 import ChangePasswordCard from "./ChangePasswordCard";
 import UserHeaderCard from "./UserHeaderCard";

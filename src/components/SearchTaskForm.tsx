@@ -26,6 +26,7 @@ import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import "dayjs/locale/pt-br";
 import axios from 'axios';
+import api from "../api/axios";
 import TaskGrid from './TaskGrid';
 import { Link, useLocation, useParams, useSearchParams } from 'react-router-dom';
 import DeleteIcon from '@mui/icons-material/Delete';
@@ -67,7 +68,7 @@ const primary = {
   const [confirmationDialog, setConfirmationDialog] = useState(false);
 
   const deleteTasksMutation = useMutation({
-    mutationFn:async (data: readonly number[]) => await axios.delete(`/api/v1/projects/${projectId}/tasks`, {data}),
+    mutationFn:async (data: readonly number[]) => await api.delete(`/api/v1/projects/${projectId}/tasks`, {data}),
     onSuccess:() => triggerRefetchTasks(true),
   })
 
@@ -178,7 +179,7 @@ const handleProjectUpdate = (newProject) => {
   // const customSearchQuery = useQuery({
   //   queryKey:['customSearch'],
   //   queryFn: async () => {
-  //     const response = await axios.get(`/api/v1/projects/${projectId}/tasks`, {params:customQuery})
+  //     const response = await api.get(`/api/v1/projects/${projectId}/tasks`, {params:customQuery})
   //     setCustomQuery({})
   //     return response.data;
   //   },

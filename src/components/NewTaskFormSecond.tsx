@@ -1,6 +1,7 @@
 import * as React from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import axios from "axios";
+import api from "../api/axios";
 import {
   Box,
   Button,
@@ -15,39 +16,61 @@ import {
   InputLabel,
   Select,
   FormHelperText,
+  Stack,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
-import { useMutation } from "@tanstack/react-query";
+// 🔵 keep both query + mutation
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
+import { EditorContent, useEditor } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import FormatBoldIcon from "@mui/icons-material/FormatBold";
+import FormatItalicIcon from "@mui/icons-material/FormatItalic";
+import CodeIcon from "@mui/icons-material/Code";
+import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
+import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import DataObjectIcon from "@mui/icons-material/DataObject";
+import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
+import UndoIcon from "@mui/icons-material/Undo";
+import RedoIcon from "@mui/icons-material/Redo";
+import FormatClearIcon from "@mui/icons-material/FormatClear";
+import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
+import { ProjectMember } from "../pages/ProjectViewScreen";
+import TipTapField from "./TipTapField";
 
 type Member = { _id: string; name: string };
 
-type NewTask = {
-  type: string;
-  priority: string;
+// 🔵 Backend DTO (keys as expected by the API)
+type TaskRequestDTO = {
   title: string;
-  description?: string;
-  assignedTo?: string;
-  technology?: string;
-  status: string;
-  deadline?: string; // ISO string on submit
+  description?: string | null;
+  taskStatusId: string;
+  taskPriorityId: string;
+  taskTypeId: string;
+  projectPublicId: string;
+  technology?: string | null;
+  assignedToId?: string | null;
+  createdById?: string | null;
+  deadline?: string | null; // ISO
+  taskNumber?: number | null;
 };
 
-const LABELS: Record<keyof Partial<NewTask>, string> = {
+// 🔵 Labels keyed by DTO fields (for validation messages)
+const LABELS: Record<keyof Partial<TaskRequestDTO>, string> = {
   title: "Título",
-  type: "Tipo",
-  priority: "Prioridade",
+  taskTypeId: "Tipo",
+  taskPriorityId: "Prioridade",
   description: "Descrição",
-  assignedTo: "Atribuído para",
-  status: "Andamento",
+  assignedToId: "Atribuído para",
+  taskStatusId: "Andamento",
   technology: "Tecnologia",
   deadline: "Prazo",
+  projectPublicId: "Projeto",
 };
-
-const PRIORIDADES = ["Muito Baixa", "Baixa", "Média", "Alta", "Muito Alta"] as const;
-const STATUS = ["Aberta", "Desenvolvimento", "Teste", "Adiada", "Concluída", "Personalizada"] as const;
-const TIPOS = ["Erro", "Bug", "Requisito", "Funcionalidade", "Atualização", "Personalizada"] as const;
 
 function safeGetJSON<T>(key: string, fallback: T): T {
   try {
@@ -60,16 +83,52 @@ function safeGetJSON<T>(key: string, fallback: T): T {
   }
 }
 
-function findMissingRequired(data: NewTask): string[] {
-  const required: (keyof NewTask)[] = ["type", "priority", "title", "status"];
+// 🔵 require the ID fields + title
+function findMissingRequired(data: TaskRequestDTO): string[] {
+  const required: (keyof TaskRequestDTO)[] = ["taskTypeId", "taskPriorityId", "title", "taskStatusId"];
   const missing: string[] = [];
   for (const k of required) {
     const v = (data as any)[k];
     if (v === undefined || v === null || String(v).trim() === "") {
-      missing.push(LABELS[k] ?? k);
+      missing.push(LABELS[k] ?? (k as string));
     }
   }
   return missing;
+}
+
+/** API helpers + options are now ID-based */
+type Opt = { value: string; label: string };
+
+// Prefer IDs for values; fallback remains robust
+function normalizeOptions(raw: any): Opt[] {
+  if (!raw) return [];
+  return (raw as any[]).map((item) => {
+    if (typeof item === "string") {
+      // If backend ever returns strings, use the same string for value/label (not ideal for IDs)
+      return { value: item, label: item };
+    }
+    if (item && typeof item === "object") {
+      const id = item.id ?? item.value ?? "";
+      const name = item.name ?? item.label ?? item.description ?? String(id);
+      return { value: String(id), label: String(name) };
+    }
+    return { value: String(item), label: String(item) };
+  });
+}
+
+async function fetchTaskTypes(): Promise<Opt[]> {
+  const { data } = await api.get("/api/v1/tasks/types");
+  return normalizeOptions(data);
+}
+
+async function fetchTaskPriorities(): Promise<Opt[]> {
+  const { data } = await api.get("/api/v1/tasks/priorities");
+  return normalizeOptions(data);
+}
+
+async function fetchTaskStatus(): Promise<Opt[]> {
+  const { data } = await api.get("/api/v1/tasks/status");
+  return normalizeOptions(data);
 }
 
 export default function NewTaskFormSecond({
@@ -80,45 +139,74 @@ export default function NewTaskFormSecond({
   const navigate = useNavigate();
   const { projectId } = useParams();
 
-  const project = safeGetJSON<any>("currentProject", null);
-  const memberDetails: Member[] = project?.memberDetails ?? [];
+  // fetch task metadata (cache for 5min)
+  const staleTimeMs = 5 * 60_000;
+  const {
+    data: typeOptions,
+    isLoading: typesLoading,
+    error: typesError,
+  } = useQuery({ queryKey: ["task-types"], queryFn: fetchTaskTypes, staleTime: staleTimeMs });
 
-  // capture DatePicker separately (uncontrolled text inputs are still ok)
+  const {
+    data: priorityOptions,
+    isLoading: prioritiesLoading,
+    error: prioritiesError,
+  } = useQuery({ queryKey: ["task-priorities"], queryFn: fetchTaskPriorities, staleTime: staleTimeMs });
+
+  const {
+    data: statusOptions,
+    isLoading: statusLoading,
+    error: statusError,
+  } = useQuery({ queryKey: ["task-status"], queryFn: fetchTaskStatus, staleTime: staleTimeMs });
+
+  const {data:memberDetails} = useQuery({
+    queryKey: ["project-members", projectId],
+    queryFn: async () => {
+      const res = await api.get<ProjectMember[]>(`/api/v1/projects/${projectId}/members`, {
+        withCredentials: true,
+      });
+      return res.data;
+    },
+  });
+
+  const metaLoading = typesLoading || prioritiesLoading || statusLoading;
+  const metaError = (typesError || prioritiesError || statusError) as Error | undefined;
+
   const [deadline, setDeadline] = React.useState<Dayjs | null>(null);
-
-  // Inline error flags for required fields
   const [errors, setErrors] = React.useState<Record<string, string>>({});
 
+  // 🔵 mutate with DTO shape
   const newTaskMutation = useMutation({
-    mutationFn: async (data: NewTask) =>
-      axios.post(`/api/v1/projects/${projectId}/tasks`, data),
+    mutationFn: async (dto: TaskRequestDTO) =>
+      api.post(`/api/v1/projects/${projectId}/tasks`, dto),
     onSuccess: (res) =>
-      navigate(`/${projectId}/task/${res?.data?.taskId}`, { state: res.data }),
+      navigate(`/${projectId}/task/${res?.data?.taskNumber}`, { state: res.data }),
   });
 
   const onSubmit: React.FormEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     const fd = new FormData(e.currentTarget);
 
-    // Build payload from the form
-    const payload: NewTask = {
-      type: String(fd.get("type") ?? ""),
-      priority: String(fd.get("priority") ?? ""),
+    // 🔵 Build DTO with backend keys + IDs
+    const dto: TaskRequestDTO = {
       title: String(fd.get("title") ?? ""),
-      description: String(fd.get("description") ?? ""),
-      assignedTo: String(fd.get("assignedTo") ?? ""),
-      technology: String(fd.get("technology") ?? ""),
-      status: String(fd.get("status") ?? ""),
-      deadline: deadline ? deadline.toDate().toISOString() : undefined,
+      description: String(fd.get("description") ?? "") || null,
+      taskTypeId: String(fd.get("taskTypeId") ?? ""),
+      taskPriorityId: String(fd.get("taskPriorityId") ?? ""),
+      taskStatusId: String(fd.get("taskStatusId") ?? ""),
+      projectPublicId: String(projectId ?? ""),
+      technology: String(fd.get("technology") ?? "") || null,
+      assignedToId: (String(fd.get("assignedToId") ?? "") || null) as string | null,
+      createdById: null,
+      deadline: deadline ? deadline.toDate().toISOString() : null,
+      taskNumber: null,
     };
 
-    // Validate required fields
-    const missing = findMissingRequired(payload);
+    const missing = findMissingRequired(dto);
     if (missing.length) {
       setValidation(`Preencha o(s) campo(s): ${missing.join(", ")}`);
       const nextErrors: Record<string, string> = {};
       for (const label of missing) {
-        // map back to field keys by label
         const key = Object.entries(LABELS).find(([, v]) => v === label)?.[0];
         if (key) nextErrors[key] = "Obrigatório";
       }
@@ -127,7 +215,7 @@ export default function NewTaskFormSecond({
     }
 
     setErrors({});
-    newTaskMutation.mutate(payload);
+    newTaskMutation.mutate(dto);
   };
 
   return (
@@ -135,69 +223,60 @@ export default function NewTaskFormSecond({
       <Container maxWidth="md" sx={{ m:0, py: { xs: 0, md: 0, lg:0 },  px: { xs: 0, md: 0, lg:0 }}}>
         <Paper elevation={3} sx={{ p: { xs: 1, md: 2 } }}>
           <Box sx={{ mb: 2 }}>
-            <Typography 
-           sx={{
-            //   display: { xs: 'none', md: 'flex' },
-              fontFamily: 'monospace',
-              fontWeight: 700,
-              color: 'inherit',
-              textDecoration: 'none',
-            }} 
-            variant="h5" fontWeight={700} color="primary.main">
+            <Typography
+              sx={{ fontFamily: 'monospace', fontWeight: 700, color: 'inherit', textDecoration: 'none' }}
+              variant="h5" fontWeight={700} color="primary.main">
               Nova Tarefa
             </Typography>
-            {/* <Typography variant="body2" color="text.secondary">
-              Preencha os detalhes abaixo para criar uma nova tarefa.
-            </Typography> */}
           </Box>
 
           <Divider sx={{ mb: 3 }} />
 
           <Box component="form" noValidate onSubmit={onSubmit}>
             <Grid container spacing={2}>
-              {/* Tipo */}
+              {/* Tipo (value = ID, name = taskTypeId) */}
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth error={Boolean(errors.type)} size="small">
-                  <InputLabel id="type-label">{LABELS.type}</InputLabel>
+                <FormControl fullWidth error={Boolean(errors.taskTypeId)} size="small" disabled={metaLoading}>
+                  <InputLabel id="type-label">{LABELS.taskTypeId}</InputLabel>
                   <Select
                     labelId="type-label"
-                    label={LABELS.type}
-                    name="type"
-                    defaultValue={TIPOS[0]}
+                    label={LABELS.taskTypeId}
+                    name="taskTypeId"
+                    defaultValue=""
+                    displayEmpty
                   >
-                    {TIPOS.map((t) => (
-                      <MenuItem key={t} value={t}>
-                        {t}
+                    {metaLoading && <MenuItem value="" disabled>Carregando tipos...</MenuItem>}
+                    {typeOptions?.map((o) => (
+                      <MenuItem  key={o.value} value={o.value}>
+                        {o.label}
                       </MenuItem>
                     ))}
                   </Select>
-                  {errors.type && <FormHelperText>{errors.type}</FormHelperText>}
+                  {errors.taskTypeId && <FormHelperText>{errors.taskTypeId}</FormHelperText>}
+                  {typesError && <FormHelperText error>Falha ao carregar tipos</FormHelperText>}
                 </FormControl>
               </Grid>
 
-              {/* Prioridade */}
+              {/* 🔵 Prioridade (value = ID, name = taskPriorityId) */}
               <Grid item xs={12} md={6}>
-                <FormControl
-                  fullWidth
-                  error={Boolean(errors.priority)}
-                  size="small"
-                >
-                  <InputLabel id="priority-label">{LABELS.priority}</InputLabel>
+                <FormControl fullWidth error={Boolean(errors.taskPriorityId)} size="small" disabled={metaLoading}>
+                  <InputLabel id="priority-label">{LABELS.taskPriorityId}</InputLabel>
                   <Select
                     labelId="priority-label"
-                    label={LABELS.priority}
-                    name="priority"
-                    defaultValue={"Média"}
+                    label={LABELS.taskPriorityId}
+                    name="taskPriorityId"
+                    defaultValue=""
+                    displayEmpty
                   >
-                    {PRIORIDADES.map((p) => (
-                      <MenuItem key={p} value={p}>
-                        {p}
+                    {metaLoading && <MenuItem value="" disabled>Carregando prioridades...</MenuItem>}
+                    {priorityOptions?.map((o) => (
+                      <MenuItem key={o.value} value={o.value}>
+                        {o.label}
                       </MenuItem>
                     ))}
                   </Select>
-                  {errors.priority && (
-                    <FormHelperText>{errors.priority}</FormHelperText>
-                  )}
+                  {errors.taskPriorityId && <FormHelperText>{errors.taskPriorityId}</FormHelperText>}
+                  {prioritiesError && <FormHelperText error>Falha ao carregar prioridades</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -214,47 +293,44 @@ export default function NewTaskFormSecond({
                 />
               </Grid>
 
-              {/* Descrição */}
+              {/* Descrição (HTML TipTap) */}
               <Grid item xs={12}>
-                <TextField
+                <TipTapField
                   name="description"
                   label={LABELS.description}
-                  placeholder="Contexto, passos para reproduzir, etc."
-                  fullWidth
-                  size="small"
-                  multiline
-                  minRows={3}
+                  defaultValue={""}
+                  ariaLabel="Editor de descrição"
                 />
               </Grid>
 
-              {/* Atribuído para */}
+              {/* Atribuído para (value = member id, name = assignedToId) */}
               <Grid item xs={12} md={6}>
                 <FormControl fullWidth size="small">
                   <InputLabel id="assigned-label">
-                    {LABELS.assignedTo}
+                    {LABELS.assignedToId}
                   </InputLabel>
                   <Select
                     labelId="assigned-label"
-                    label={LABELS.assignedTo}
-                    name="assignedTo"
+                    label={LABELS.assignedToId}
+                    name="assignedToId"
                     defaultValue=""
                     displayEmpty
-                    disabled={!memberDetails.length}
+                    disabled={!memberDetails?.length}
                   >
-                    {memberDetails.length === 0 ? (
+                    {memberDetails?.length === 0 ? (
                       <MenuItem value="" disabled>
                         Carregando membros...
                       </MenuItem>
                     ) : (
-                      memberDetails.map((m) => (
-                        <MenuItem key={m._id} value={m._id}>
-                          {m.name}
+                      memberDetails?.map((m) => (
+                        <MenuItem key={m.userPublicId} value={m.userPublicId}>
+                          {m.displayName}
                         </MenuItem>
                       ))
                     )}
                   </Select>
                   <FormHelperText>
-                    {memberDetails.length
+                    {memberDetails?.length
                       ? "Selecione um membro (opcional)."
                       : "Aguarde carregar os membros do projeto."}
                   </FormHelperText>
@@ -266,31 +342,32 @@ export default function NewTaskFormSecond({
                 <TextField
                   name="technology"
                   label={LABELS.technology}
-                  placeholder="Ex.: React, Spring Boot"
+                  placeholder="Ex.: React, Spring Boot etc."
                   fullWidth
                   size="small"
                 />
               </Grid>
 
-              {/* Andamento */}
+              {/* Andamento (value = ID, name = taskStatusId) */}
               <Grid item xs={12} md={6}>
-                <FormControl fullWidth error={Boolean(errors.status)} size="small">
-                  <InputLabel id="status-label">{LABELS.status}</InputLabel>
+                <FormControl fullWidth error={Boolean(errors.taskStatusId)} size="small" disabled={metaLoading}>
+                  <InputLabel id="status-label">{LABELS.taskStatusId}</InputLabel>
                   <Select
                     labelId="status-label"
-                    label={LABELS.status}
-                    name="status"
-                    defaultValue={STATUS[0]}
+                    label={LABELS.taskStatusId}
+                    name="taskStatusId"
+                    defaultValue=""
+                    displayEmpty
                   >
-                    {STATUS.map((s) => (
-                      <MenuItem key={s} value={s}>
-                        {s}
+                    {metaLoading && <MenuItem value="" disabled>Carregando status...</MenuItem>}
+                    {statusOptions?.map((o) => (
+                      <MenuItem key={o.value} value={o.value}>
+                        {o.label}
                       </MenuItem>
                     ))}
                   </Select>
-                  {errors.status && (
-                    <FormHelperText>{errors.status}</FormHelperText>
-                  )}
+                  {errors.taskStatusId && <FormHelperText>{errors.taskStatusId}</FormHelperText>}
+                  {statusError && <FormHelperText error>Falha ao carregar status</FormHelperText>}
                 </FormControl>
               </Grid>
 
@@ -308,24 +385,29 @@ export default function NewTaskFormSecond({
                     },
                   }}
                 />
-                {/* We store deadline separately and serialize on submit */}
               </Grid>
 
               {/* Submit */}
-              <Grid item xs={12} md={12} sx={{}}>
+              <Grid item xs={12} md={12}>
                 <Box sx={{ display: "flex", justifyContent: { xs: "stretch", md: "flex-end" } }}>
                   <Button
                     type="submit"
                     variant="contained"
                     size="large"
                     sx={{ minWidth: 180 }}
-                    disabled={newTaskMutation.isPending}
+                    disabled={newTaskMutation.isPending || metaLoading}
                   >
                     {newTaskMutation.isPending ? "Enviando..." : "Enviar"}
                   </Button>
                 </Box>
               </Grid>
             </Grid>
+
+            {metaError && (
+              <Typography sx={{ mt: 2 }} color="error">
+                Não foi possível carregar metadados da tarefa. Tente novamente.
+              </Typography>
+            )}
           </Box>
         </Paper>
       </Container>

@@ -18,6 +18,7 @@ import { ThemeProvider } from '@emotion/react';
 import { Copyright } from './Login';
 import Footer from '../components/Footer';
 import axios from 'axios';
+import api from '../api/axios';
 import NewTaskForm from '../components/NewTaskForm';
 import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';

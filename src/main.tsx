@@ -22,6 +22,7 @@ import TaskActivityPage from './pages/TaskActivityPage.js';
 import AppProvider from './context/AppProvider.js';
 import UserSettingsPage from './pages/user_edit_profile/UserSettingsPage.js';
 import UserPublicProfilePage from './pages/UserPublicProfilePage.js';
+import ProjectViewScreen from './pages/ProjectViewScreen.js';
 
 const root = document.getElementById('root') as HTMLElement;
 
@@ -43,11 +44,12 @@ const router = createBrowserRouter([
       { path: ":projectId/tasks", element: <SearchTaskPage /> },
       { path: ":projectId/task/:taskId/atividades", element: <TaskActivityPage /> },
       { path: "projetos", element: <ProjectPage /> },
+      { path: "p/:projectId", element: <ProjectViewScreen /> },
       { path: "user/settings", element: <UserSettingsPage /> },
       { path: "user/profile", element: <UserPublicProfilePage /> },
       { path: "novo-projeto", element: <NewProjectPage /> },
       { path: ":projectId/nova_tarefa", element: <CreateTaskPage /> },
-      { path: ":projectId/task/:taskId", element: <TaskViewPage /> },
+      { path: ":projectId/task/:taskNumber", element: <TaskViewPage /> },
       { path: "task-grid", element: <TaskPage /> },
     ],
   },

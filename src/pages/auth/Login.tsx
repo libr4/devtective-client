@@ -20,7 +20,8 @@ import cover from '../../assets/detective.jpg'
 import * as React from "react";
 import { useState } from "react";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
-import axios from "axios";
+// import axios from "axios";
+import api from '../../api/axios';
 import {
   Alert,
   Avatar,
@@ -87,7 +88,7 @@ export default function SignIn() {
 
     try {
       setIsSubmitting(true);
-      await axios.post("/api/v1/auth/login", data /*, { withCredentials: true } */);
+      await api.post("/api/v1/auth/login", data /*, { withCredentials: true } */);
       navigate("/projetos");
     } catch (err: unknown) {
       setErrorMsg("Não foi possível entrar. Verifique suas credenciais.");

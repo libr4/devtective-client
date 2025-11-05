@@ -3,6 +3,7 @@ import Box from '@mui/material/Box';
 // import './App.css'
 import React, { useEffect } from 'react'
 import axios from 'axios'
+import api from './api/axios';
 import CustomAppBar from './components/CustomAppBar';
 import CustomDrawer from './components/CustomDrawer';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
@@ -21,7 +22,7 @@ export default function App() {
   const { data: user, isLoading, isError } = useQuery({
     queryKey: ["current-user"],
     queryFn: async () => {
-      const res = await axios.get("/api/v1/users/me", { withCredentials: true });
+      const res = await api.get("/api/v1/users/me", { withCredentials: true });
       return res.data ?? null; 
     },
     staleTime: 0,

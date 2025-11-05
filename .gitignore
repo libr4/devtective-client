@@ -21,3 +21,4 @@ node_modules
 *.sln
 *.sw?
 src.zip
+.env

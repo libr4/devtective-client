@@ -23,6 +23,7 @@ import { visuallyHidden } from '@mui/utils';
 import Header from './Header';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import axios from 'axios';
+import api from "../api/axios";
 import { Link, useParams } from 'react-router-dom';
 import CircularProgress from '@mui/material/CircularProgress';
 import Container from '@mui/material/Container';
@@ -201,7 +202,7 @@ export default function EnhancedTable({selected, setSelected, refetchTasks, trig
     const allTasksQuery = useQuery({
         queryKey:[`all_tasks_${projectId}${searchParams}`],
         queryFn: async () => {
-            const response = await axios.get(`/api/v1/projects/${projectId}/tasks`, (Object.keys(customQuery).length !== 0) ? {params:customQuery} : undefined)
+            const response = await api.get(`/api/v1/projects/${projectId}/tasks`, (Object.keys(customQuery).length !== 0) ? {params:customQuery} : undefined)
             triggerRefetchTasks(false);
             setCustomQuery({});
             return response.data;

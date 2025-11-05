@@ -4,6 +4,7 @@ import { ThemeProvider } from '@emotion/react';
 import { useEffect, useState } from 'react';
 import "dayjs/locale/pt-br";
 import axios from 'axios';
+import api from '../api/axios';
 import ProjectCard from '../components/project_card/ProjectCard';
 import Header from '../components/Header';
 import { useQuery } from '@tanstack/react-query';
@@ -55,7 +56,7 @@ const primary = {
   const projectQuery = useQuery({
     queryKey:['all_projects'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/projects')
+      const response = await api.get('/api/v1/projects')
       return response.data;
     }
   })
@@ -63,7 +64,7 @@ const primary = {
   const currentUserQuery = useQuery({
     queryKey:['current-user'],
     queryFn: async () => {
-      const response = await axios.get('/api/v1/users/me')
+      const response = await api.get('/api/v1/users/me')
       setCurrentUser(response.data)
       
       return response.data;
@@ -120,7 +121,7 @@ const primary = {
       }}
     >
       {projectQuery.data.map((item, index) => {
-        return <ProjectCard id={CARD_ID_PREFIX + item._id} key={item._id} projectKey={item.id} project={item} title={item.name.toUpperCase()} description={item.description}></ProjectCard>
+        return <ProjectCard id={CARD_ID_PREFIX + item.publicId} key={item.publicId} projectKey={item.publicId} project={item} title={item.name.toUpperCase()} description={item.description}></ProjectCard>
       })}
     </Box>
     </Box>

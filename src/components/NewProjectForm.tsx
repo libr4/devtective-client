@@ -18,11 +18,14 @@ import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
 import "dayjs/locale/pt-br";
-import { Form } from "react-router-dom";
+import { Form, useNavigate } from "react-router-dom";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../api/axios";
 
 type User = {
+  publicId: any;
+  displayName: string | undefined;
   _id: string;        // using your current id for now
   name: string;
   username?: string;
@@ -38,21 +41,22 @@ type Workspace = {
 type CreateProjectPayload = {
   name: string;
   description?: string;
-  start?: string | null;
-  end?: string | null;
-  leaderIds: string[];
-  memberIds: string[];
-  workspaceId: string; // NEW: required
+  startDate?: string | null;
+  endDate?: string | null;
+  leaderPublicIds: string[];
+  memberPublicIds: string[];
+  workspacePublicId: string; 
 };
 
 type CreateProjectResponse = {
-  id?: string;
-  projectId?: string;
+  // id?: string;
+  publicId?: string;
   name: string;
 };
 
 export default function NewProjectPage() {
   const qc = useQueryClient();
+  const navigate = useNavigate();
 
   const [leaders, setLeaders] = React.useState<string[]>([]);
   const [members, setMembers] = React.useState<string[]>([]);
@@ -72,15 +76,15 @@ export default function NewProjectPage() {
   const usersQuery = useQuery({
     queryKey: ["users-for-project"],
     queryFn: async () => {
-      const res = await axios.get<User[]>("/api/v1/users", { withCredentials: true });
-      return res.data.filter((u) => !!u.name);
+      const res = await api.get<User[]>("/api/v1/users/related", { withCredentials: true });
+      return res.data.filter((u) => !!u.displayName);
     },
   });
 
   const meQuery = useQuery({
     queryKey: ["current-user"],
     queryFn: async () => {
-      const res = await axios.get<User>("/api/v1/users/me", { withCredentials: true });
+      const res = await api.get<User>("/api/v1/users/me", { withCredentials: true });
       return res.data;
     },
   });
@@ -89,7 +93,7 @@ export default function NewProjectPage() {
   const workspacesQuery = useQuery({
     queryKey: ["workspaces"],
     queryFn: async () => {
-      const res = await axios.get<Array<{ id?: string; publicId?: string; name: string }>>(
+      const res = await api.get<Array<{ id?: string; publicId?: string; name: string }>>(
         "/api/v1/workspaces/me",
         { withCredentials: true }
       );
@@ -100,7 +104,7 @@ export default function NewProjectPage() {
 
   // Ensure current user is leader by default
   React.useEffect(() => {
-    const me = meQuery.data?._id;
+    const me = meQuery.data?.publicId;
     if (me && leaders.length === 0) setLeaders([me]);
   }, [meQuery.data, leaders.length]);
 
@@ -119,7 +123,7 @@ export default function NewProjectPage() {
   const createMutation = useMutation({
     mutationKey: ["create-project"],
     mutationFn: async (payload: CreateProjectPayload) => {
-      const res = await axios.post<CreateProjectResponse>("/api/v1/projects", payload, {
+      const res = await api.post<CreateProjectResponse>("/api/v1/projects", payload, {
         withCredentials: true,
       });
       return res.data;
@@ -128,9 +132,10 @@ export default function NewProjectPage() {
       console.error(err);
       setValidation("Ocorreu um erro ao criar o projeto. Tente novamente.");
     },
-    onSuccess: () => {
+    onSuccess: (proj) => {
       setValidation(null);
-      // navigate after success if you want
+      const publicId = proj.publicId;
+      navigate(publicId ? `/p/${publicId}` : "/projetos");
     },
   });
 
@@ -139,7 +144,7 @@ export default function NewProjectPage() {
     mutationKey: ["create-workspace"],
     mutationFn: async (name: string) => {
       console.log('MUTATION TRIGGERED!')
-      const res = await axios.post<{ id?: string; publicId?: string; name: string }>(
+      const res = await api.post<{ id?: string; publicId?: string; name: string }>(
         "/api/v1/workspaces",
         { name },
         { withCredentials: true }
@@ -157,21 +162,28 @@ export default function NewProjectPage() {
 
   // --- Helpers ---------------------------------------------------------------
   const allUsers = usersQuery.data ?? [];
-  const currentUserId = meQuery.data?._id;
+  const currentUserId = meQuery.data?.publicId;
+  console.log("CURRENT USER ID:", currentUserId)
 
-  const leaderOptions = allUsers;
-  const memberOptions = allUsers;
+  const memberOptions = [...allUsers];
+  // allUsers.push(meQuery?.data as User);
+  const me = meQuery?.data as User;
+  // let leaderOptions2 = new Set(allUsers); 
+  const leaderOptions = [me, ...allUsers]
 
-  const leaderValue = leaderOptions.filter((u) => leaders.includes(u._id));
-  const memberValue = memberOptions.filter((u) => members.includes(u._id));
+  const leaderValue = leaderOptions.filter((u) => leaders.includes(u.publicId));
+  const memberValue = memberOptions.filter((u) => members.includes(u.publicId));
 
   const usersLoading = usersQuery.isLoading;
   const creating = createMutation.isPending;
   const wsLoading = workspacesQuery.isLoading || createWorkspaceMutation.isPending;
 
   function ensureSelfIsLeader(nextIds: string[]) {
+    console.log("222CURRENT USER ID:", currentUserId)
     if (!currentUserId) return nextIds;
-    return nextIds.includes(currentUserId) ? nextIds : [currentUserId, ...nextIds];
+    const ensuredList = nextIds.includes(currentUserId) ? nextIds : [currentUserId, ...nextIds];
+    console.log("ENSURED LIST:", ensuredList)
+    return ensuredList;
   }
 
   function handleSubmit(e: React.FormEvent) {
@@ -198,12 +210,13 @@ export default function NewProjectPage() {
     const payload: CreateProjectPayload = {
       name: name.trim(),
       description: description.trim() || undefined,
-      start: start ? start.toDate().toISOString() : null,
-      end: end ? end.toDate().toISOString() : null,
-      leaderIds: Array.from(new Set(ensureSelfIsLeader(leaders))),
-      memberIds: Array.from(new Set(members)),
-      workspaceId: selectedWs.id, // NEW
+      startDate: start ? start.toDate().toISOString() : null,
+      endDate: end ? end.toDate().toISOString() : null,
+      leaderPublicIds: Array.from(new Set(ensureSelfIsLeader(leaders))),
+      memberPublicIds: Array.from(new Set(members)),
+      workspacePublicId: selectedWs.id, // NEW
     };
+    console.log("PAYLOAD:", payload)
 
     createMutation.mutate(payload);
   }
@@ -338,24 +351,26 @@ export default function NewProjectPage() {
                       multiple
                       options={leaderOptions}
                       value={leaderValue}
-                      getOptionLabel={(o) => o.name || o.username || o.email || "Usuário"}
+                      getOptionLabel={(o) => `${o.displayName as string} (${o.username as string})` || o.email || "Usuário"}
                       onChange={(_, value) => {
-                        const next = value.map((v) => v._id);
+                        console.log("AOSFHLJAHKLJ")
+                        const next = value.map((v) => v.publicId);
                         setLeaders(ensureSelfIsLeader(next));
                       }}
                       disableCloseOnSelect
                       loading={usersQuery.isLoading}
                       renderTags={(value, getTagProps) =>
                         value.map((option, index) => {
-                          const isSelf = option._id === currentUserId;
+                          const isSelf = option.publicId === currentUserId;
                           const tagProps = getTagProps({ index });
                           return (
                             <Chip
                               {...tagProps}
-                              key={option._id}
-                              label={option.name}
+                              key={option.publicId}
+                              label={option.displayName}
                               onDelete={
-                                isSelf && value.length === 1 ? undefined : tagProps.onDelete
+                                isSelf && 
+                                value.length === 1 ? undefined : tagProps.onDelete
                               }
                               sx={{ "& .MuiChip-icon": { mr: 0.5 } }}
                             />
@@ -382,8 +397,9 @@ export default function NewProjectPage() {
                       multiple
                       options={memberOptions}
                       value={memberValue}
-                      getOptionLabel={(o) => o.name || o.username || o.email || "Usuário"}
-                      onChange={(_, value) => setMembers(value.map((v) => v._id))}
+                      getOptionLabel={(o) => `${o.displayName as string} (${o.username as string})` || o.email || "Usuário"}
+                      onChange={(_, value) => { console.log("VALUE:", value)
+                        setMembers(value.map((v) => v.publicId))}}
                       disableCloseOnSelect
                       loading={usersQuery.isLoading}
                       renderInput={(params) => (

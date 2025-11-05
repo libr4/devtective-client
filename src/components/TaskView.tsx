@@ -13,6 +13,7 @@ import SwitchableField from './SwitchableField';
 import { useAppContext } from '../context/AppProvider';
 import { useMutation } from '@tanstack/react-query';
 import axios from 'axios';
+import api from "../api/axios";
 
 export interface editState {
     type:boolean,
@@ -112,7 +113,7 @@ export default function TaskView() {
 
   const taskActivityPost = useMutation({
     mutationFn: async(data:ITaskUpdate) => {
-      const response = await axios.patch(`/api/v1/projects/${projectId}/tasks/${state.taskId}`, data);
+      const response = await api.patch(`/api/v1/projects/${projectId}/tasks/${state.taskId}`, data);
       return response;
     }
   })
@@ -320,7 +321,7 @@ export default function TaskView() {
             }}
             type='submit'
             variant='contained'>
-              Lançar movimentação
+              Atualizar
           </Button>
           </Box>
         </Box>

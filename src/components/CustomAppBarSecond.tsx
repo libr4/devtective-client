@@ -21,6 +21,7 @@ import { GiSmokingPipe } from "react-icons/gi";
 import { useAppContext } from "../context/AppProvider";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../api/axios";
 
 /** -----------------------------
  *  Theme (module scope, 1-time)
@@ -97,7 +98,7 @@ const settings = useMemo(
     queryKey: ["project", projectId],
     queryFn: async () => {
       
-      const res = await axios.get(`/api/v1/projects/${projectId}`, { withCredentials: true });
+      const res = await api.get(`/api/v1/projects/${projectId}`, { withCredentials: true });
       console.log("PROJECT QUERY DONE IN APP BAR: ", res.data)
       return res.data;
     },

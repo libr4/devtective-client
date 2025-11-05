@@ -17,6 +17,7 @@ import { useState } from 'react';
 import { Form, redirect, Link as RouterLink } from 'react-router-dom';
 import cover from '../../assets/detective.jpg'
 import axios from 'axios';
+import api from '../../api/axios';
 import Copyright from './components/Copyright';
 import { Paper } from '@mui/material';
 
@@ -42,7 +43,7 @@ const primary = {
       const formData = await request.formData();
       const data = Object.fromEntries(formData);
       console.log(data)
-      await axios.post('/api/v1/auth/register', data);
+      await api.post('/api/v1/auth/register', data);
       return redirect('/login');
     } catch (error) {
       return error;

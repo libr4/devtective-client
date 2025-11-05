@@ -18,6 +18,7 @@ import { useAppContext } from '../context/AppProvider';
 import { useQuery } from '@tanstack/react-query';
 import { useParams } from 'react-router-dom';
 import axios from 'axios';
+import api from '../api/axios';
 import { CircularProgress } from '@mui/material';
 
 function createData(name, status, type, priority, date, price) {
@@ -122,7 +123,7 @@ export default function CollapsibleTable() {
   const allActivitiesQuery = useQuery({
     queryKey:[`get_all_activities_${projectId}_${taskId}`] ,
     queryFn: async () => {
-      const response = await axios.get(`/api/v1/projects/${projectId}/tasks/${currentTask._id}/updates`)
+      const response = await api.get(`/api/v1/projects/${projectId}/tasks/${currentTask._id}/updates`)
       return response.data;
     }
   })

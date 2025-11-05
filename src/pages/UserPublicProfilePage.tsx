@@ -23,6 +23,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import { useParams, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import axios from "axios";
+import api from '../api/axios';
 import { useAppContext } from "../context/AppProvider";
 
 /* ---------------- Style: keep it consistent with TaskViewSecond ---------------- */
@@ -73,7 +74,7 @@ export default function UserPublicProfilePage() {
     queryFn: async (): Promise<PublicUser> => {
       // Ajuste: se sua API usa /api/v1/users/:id para qualquer id e /me para o próprio
       const url = userId ? `/api/v1/users/${userId}` : `/api/v1/users/me`;
-      const res = await axios.get(url, { withCredentials: true });
+      const res = await api.get(url, { withCredentials: true });
       return res.data;
     },
     staleTime: 0,

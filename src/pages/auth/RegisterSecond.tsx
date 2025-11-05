@@ -21,6 +21,7 @@ import * as React from "react";
 import { useState } from "react";
 import { Form, redirect, Link as RouterLink, useNavigate } from "react-router-dom";
 import axios from "axios";
+import api from '../../api/axios';
 import {
   Alert,
   Avatar,
@@ -67,7 +68,7 @@ interface LoginData {
       const formData = await request.formData();
       const data = Object.fromEntries(formData);
       console.log(data)
-      await axios.post('/api/v1/auth/register', data);
+      await api.post('/api/v1/auth/register', data);
       return redirect('/login');
     } catch (error) {
       return error;
@@ -98,7 +99,7 @@ export default function SignIn() {
 
     try {
       setIsSubmitting(true);
-      await axios.post("/api/v1/auth/login", data /*, { withCredentials: true } */);
+      await api.post("/api/v1/auth/login", data /*, { withCredentials: true } */);
       navigate("/projetos");
     } catch (err: unknown) {
       setErrorMsg("Não foi possível entrar. Verifique suas credenciais.");

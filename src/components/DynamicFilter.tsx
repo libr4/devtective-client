@@ -25,6 +25,7 @@ import AdapterDateFns from '@mui/lab/AdapterDateFns';
 import AddIcon from '@mui/icons-material/Add';
 import RemoveIcon from '@mui/icons-material/Remove';
 import "dayjs/locale/pt-br";
+import api from '../api/axios';
 import axios from 'axios';
 import TaskGrid from './TaskGrid';
 import { Link, useParams } from 'react-router-dom';

@@ -1,6 +1,7 @@
 import { Avatar, Box, Button, Divider, FormControl, InputLabel, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../../api/axios";
 import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppProvider";
 
@@ -11,7 +12,7 @@ export default function DeleteUserCard({rowSx, setMsg}) {
     mutationKey:['delete-user'],
     mutationFn: async () => {
       // Consider soft-delete or a confirmation flow in your app
-      const res = await axios.delete("/api/v1/users/me", { withCredentials: true });
+      const res = await api.delete("/api/v1/users/me", { withCredentials: true });
       return res.data;
     },
     onSuccess: () => {

@@ -1,6 +1,7 @@
 import { Avatar, Box, Button, Divider, FormControl, InputLabel, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../../api/axios";
 import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppProvider";
 
@@ -12,7 +13,7 @@ export default function ChangePasswordCard({rowSx, setMsg}) {
     const changePassword = useMutation({
         mutationKey:['change-password'],
         mutationFn: async (payload: { currentPassword: string; newPassword: string }) => {
-        const res = await axios.post("/api/v1/users/change-password", payload, {
+        const res = await api.post("/api/v1/users/change-password", payload, {
             withCredentials: true,
         });
         return res.data;

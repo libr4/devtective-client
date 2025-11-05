@@ -1,6 +1,7 @@
 import { Avatar, Box, Button, Divider, FormControl, InputLabel, MenuItem, Paper, Select, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import axios from "axios";
+import api from "../../api/axios";
 import { useEffect, useMemo, useState } from "react";
 import { useAppContext } from "../../context/AppProvider";
 
@@ -56,7 +57,7 @@ export default function UserDataCard({rowSx, setMsg}) {
     mutationKey:['user-profile'],
     mutationFn: async (payload: UserPayload) => {
       // Adjust endpoint/body to your API contract
-      const res = await axios.patch("/api/v1/users/me", payload, { withCredentials: true });
+      const res = await api.patch("/api/v1/users/me", payload, { withCredentials: true });
       return res.data;
     },
     onSuccess: () => {
@@ -76,7 +77,7 @@ export default function UserDataCard({rowSx, setMsg}) {
         mutationFn: async (file: File) => {
           const fd = new FormData();
           fd.append("avatar", file);
-          const res = await axios.post("/api/v1/users/me/avatar", fd, {
+          const res = await api.post("/api/v1/users/me/avatar", fd, {
             withCredentials: true,
             headers: { "Content-Type": "multipart/form-data" },
           });

@@ -24,7 +24,7 @@ type StyledCardProps = {
   id: string;
   title: string;
   description: string;
-  project: { id: string; memberDetails?: { name: string }[] };
+  project: { publicId: string; memberDetails?: { name: string }[] };
   projectKey: string;
 };
 
@@ -42,7 +42,7 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
       setCurrentProject(project);
       return;
     }
-      navigate(`/${project.id}/tasks`, { state: { project } });
+      navigate(`/${project.publicId}/tasks`, { state: { project } });
   };
 
   const hoverSx = isCardClicked
@@ -107,7 +107,7 @@ function ProjectCard({ id, title, description, project, projectKey }: StyledCard
             <IconButton
               onClick={(e) => {
                 e.stopPropagation(); // don’t trigger card click
-                navigate(`/${project.id}/alterar`);
+                navigate(`/${project.publicId}/alterar`);
               }}
               size="small"
               sx={{ color: 'white', '&:hover': { opacity: 0.9 } }}
