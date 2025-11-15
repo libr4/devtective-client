@@ -53,6 +53,7 @@ export type Project = {
   workspace?: { id?: string; publicId?: string; name?: string } | null;
   leaders?: Array<{ publicId: string; displayName: string; username?: string; avatarUrl?: string }>; // optional
   members?: ProjectMember[]; // optional (fallback if separate endpoint not available)
+  linkCode?: string;
 };
 
 // -------------------- Helpers --------------------
@@ -71,7 +72,7 @@ const statusChipColor: Record<ProjectMember["invitationStatus"], "default" | "su
 };
 
 // -------------------- Members Tab --------------------
-function MembersTab({ projectId }: { projectId: string }) {
+function MembersTab({ projectId, linkCode }: { projectId: string, linkCode:string }) {
   const membersQuery = useQuery({
     queryKey: ["project-members", projectId],
     queryFn: async () => {
@@ -100,7 +101,7 @@ function MembersTab({ projectId }: { projectId: string }) {
         <Typography variant="subtitle1">
           {loading ? <Skeleton width={140} /> : `${data.length} membro(s)`}
         </Typography>
-        <InviteLinkButton />
+        <InviteLinkButton linkCode={linkCode} />
       </Stack>
 
       {error && (
@@ -177,10 +178,10 @@ function MembersTab({ projectId }: { projectId: string }) {
   );
 }
 
-function InviteLinkButton() {
+function InviteLinkButton({linkCode}:{linkCode:string}) {
   const [copied, setCopied] = React.useState<null | string>(null);
   const handleCopy = async () => {
-    const link = `${window.location.origin}/invite/coming-soon`;
+    const link = `${window.location.origin}/invite/${linkCode}`;
     await navigator.clipboard.writeText(link);
     setCopied(link);
     setTimeout(() => setCopied(null), 1800);
@@ -212,6 +213,8 @@ export default function ProjectViewScreen() {
   });
 
   const p = projectQuery.data;
+  console.log("PROJECT", p);
+  const linkCode = p?.publicId;
 
   return (
     <Container maxWidth="lg" sx={{ py: { xs: 2, md: 3 } }}>
@@ -292,7 +295,7 @@ export default function ProjectViewScreen() {
               </Stack>
             )}
 
-            {tab === "members" && projectId && <MembersTab projectId={projectId} />}
+            {tab === "members" && projectId && <MembersTab projectId={projectId} linkCode={linkCode as string} />}
           </Box>
         </Paper>
 

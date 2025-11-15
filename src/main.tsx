@@ -23,6 +23,7 @@ import AppProvider from './context/AppProvider.js';
 import UserSettingsPage from './pages/user_edit_profile/UserSettingsPage.js';
 import UserPublicProfilePage from './pages/UserPublicProfilePage.js';
 import ProjectViewScreen from './pages/ProjectViewScreen.js';
+import InvitePage from './pages/InvitePage.js';
 
 const root = document.getElementById('root') as HTMLElement;
 
@@ -55,6 +56,7 @@ const router = createBrowserRouter([
   },
   { path: "login", element: <Login /> },
   { path: "register", element: <Register />, action: registerAction },
+  { path: "invite/:inviteId", element: <InvitePage /> },
 ]);
 
 ReactDOM.createRoot(root).render(
