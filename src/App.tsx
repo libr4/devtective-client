@@ -4,15 +4,13 @@ import Box from '@mui/material/Box';
 import React, { useEffect } from 'react'
 import axios from 'axios'
 import api from './api/axios';
-import CustomAppBar from './components/CustomAppBar';
-import CustomDrawer from './components/CustomDrawer';
 import { Navigate, Outlet, useLocation, useNavigate } from 'react-router-dom';
 import Footer from './components/Footer';
 import AppProvider, { useAppContext } from './context/AppProvider';
 import { useQuery } from '@tanstack/react-query';
 import { CircularProgress, Toolbar } from '@mui/material';
-import CustomAppBarSecond from './components/CustomAppBarSecond';
-import CustomDrawerSecond from './components/CustomDrawerSecond';
+import CustomAppBarSecond from './components/app_bar/CustomAppBarSecond';
+import CustomDrawerSecond from './components/drawer/CustomDrawerSecond';
 
 
 export default function App() {
