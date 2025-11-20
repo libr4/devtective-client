@@ -16,10 +16,6 @@ import {
   Box,
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-import CreateIcon from "@mui/icons-material/Create";
-import SearchIcon from "@mui/icons-material/Search";
-import InboxIcon from "@mui/icons-material/Inbox";
-import MailIcon from "@mui/icons-material/Mail";
 import VideogameAssetIcon from "@mui/icons-material/VideogameAsset";
 import { GiSettingsKnobs } from "react-icons/gi";
 import { useAppContext } from "../../context/AppProvider"; // <-- adjust import
@@ -51,8 +47,8 @@ export default function CustomDrawerSecond() {
 
   const menus = useMemo(
     () => ({
-      projects: TASKS_MENU(hasProject, projectId as string),
-      tasks: PROJECTS_MENU(hasCard, cardClicked),
+      projects: PROJECTS_MENU(hasCard, cardClicked),
+      tasks: TASKS_MENU(hasProject, projectId as string),
     }),
     [hasProject, hasCard, projectId, cardClicked]
   );
@@ -66,8 +62,10 @@ export default function CustomDrawerSecond() {
     []
   );
 
-  // Fallback to tasks if currentScreen is something unexpected
-  const activeMenu = (menus as Record<string, typeof menus.tasks>)[currentScreen] ?? menus.projects;
+  const activeMenu = (menus as Record<string, typeof menus.projects>)[currentScreen] ?? menus.projects;
+  console.log("CURRENT SCREEEN: ", currentScreen)
+  console.log("ACTIVE MENU: ", activeMenu)
+  console.log("MENUS: ", menus)
 
   return (
     <ThemeProvider theme={theme}>
