@@ -1,14 +1,9 @@
 import * as React from 'react';
 import Box from '@mui/material/Box';
 import { FormControlLabel, createTheme } from '@mui/material';
-import Header from '../components/Header';
 import Footer from '../components/Footer';
-import axios from 'axios';
-import api from '../api/axios';
-import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 import NewProjectForm from '../components/NewProjectForm';
-import ProjectPage from './ProjectViewScreen';
 
 export default function NewTask() {
   const [showPassword, setShowPassword] = React.useState(false);

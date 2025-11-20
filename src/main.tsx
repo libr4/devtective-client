@@ -7,9 +7,8 @@ import App from './App.jsx'
 import { Navigate, RouterProvider, createBrowserRouter } from 'react-router-dom';
 import TestPage from './pages/TestPage.js';
 import Login from './pages/auth/Login.js';
-import SearchTaskForm from './components/SearchTaskForm.js';
 import CreateTaskPage from './pages/CreateTaskPage.js';
-import SearchTaskPage from './pages/SearchTaskPage.js';
+import SearchTaskPage from './pages/search_task/SearchTaskPage.js';
 import ErrorPage from './pages/ErrorPage.js';
 import Register, { registerAction } from './pages/auth/RegisterSecond.js';
 import ProjectPage from './pages/ProjectPage.js';

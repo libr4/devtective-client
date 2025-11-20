@@ -25,22 +25,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { DatePicker, LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import dayjs, { Dayjs } from "dayjs";
-import { EditorContent, useEditor } from "@tiptap/react";
-import StarterKit from "@tiptap/starter-kit";
-import FormatBoldIcon from "@mui/icons-material/FormatBold";
-import FormatItalicIcon from "@mui/icons-material/FormatItalic";
-import CodeIcon from "@mui/icons-material/Code";
-import FormatListBulletedIcon from "@mui/icons-material/FormatListBulleted";
-import FormatListNumberedIcon from "@mui/icons-material/FormatListNumbered";
-import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
-import DataObjectIcon from "@mui/icons-material/DataObject";
-import HorizontalRuleIcon from "@mui/icons-material/HorizontalRule";
-import UndoIcon from "@mui/icons-material/Undo";
-import RedoIcon from "@mui/icons-material/Redo";
-import FormatClearIcon from "@mui/icons-material/FormatClear";
-import KeyboardReturnIcon from "@mui/icons-material/KeyboardReturn";
 import { ProjectMember } from "../pages/ProjectViewScreen";
 import TipTapField from "./TipTapField";
+import { fetchTaskPriorities, fetchTaskStatus, fetchTaskTypes } from "../pages/common/queries";
 
 type Member = { _id: string; name: string };
 
@@ -97,39 +84,9 @@ function findMissingRequired(data: TaskRequestDTO): string[] {
 }
 
 /** API helpers + options are now ID-based */
-type Opt = { value: string; label: string };
 
-// Prefer IDs for values; fallback remains robust
-function normalizeOptions(raw: any): Opt[] {
-  if (!raw) return [];
-  return (raw as any[]).map((item) => {
-    if (typeof item === "string") {
-      // If backend ever returns strings, use the same string for value/label (not ideal for IDs)
-      return { value: item, label: item };
-    }
-    if (item && typeof item === "object") {
-      const id = item.id ?? item.value ?? "";
-      const name = item.name ?? item.label ?? item.description ?? String(id);
-      return { value: String(id), label: String(name) };
-    }
-    return { value: String(item), label: String(item) };
-  });
-}
 
-async function fetchTaskTypes(): Promise<Opt[]> {
-  const { data } = await api.get("/api/v1/tasks/types");
-  return normalizeOptions(data);
-}
 
-async function fetchTaskPriorities(): Promise<Opt[]> {
-  const { data } = await api.get("/api/v1/tasks/priorities");
-  return normalizeOptions(data);
-}
-
-async function fetchTaskStatus(): Promise<Opt[]> {
-  const { data } = await api.get("/api/v1/tasks/status");
-  return normalizeOptions(data);
-}
 
 export default function NewTaskFormSecond({
   setValidation,

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useMemo } from "react";
-import { Link as RouterLink, useLocation, useParams } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate, useParams } from "react-router-dom";
 import {
   AppBar,
   Toolbar,
@@ -18,10 +18,10 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import { GiSmokingPipe } from "react-icons/gi";
-import { useAppContext } from "../context/AppProvider";
-import { useQuery } from "@tanstack/react-query";
+import { useAppContext } from "../../context/AppProvider";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import axios from "axios";
-import api from "../api/axios";
+import api from "../../api/axios";
 
 /** -----------------------------
  *  Theme (module scope, 1-time)
@@ -40,13 +40,9 @@ const theme = createTheme({
 export default function CustomAppBarSecond() {
   const { projectId, taskId } = useParams();
   const {currentUser, currentProject, setCurrentProject} = useAppContext();
-  // if (currentProject == null) {
-  //   const {state} = useLocation();
-  //   setCurrentProject(state);
-  // }
-  console.log("APP BAR PROJECT:", currentProject)
 
-  // Build pages safely (avoid bad links if params are missing)
+  const navigate = useNavigate();
+
   const pages = useMemo(
     () => [
       { label: "Projetos", to: "/projetos", disabled: false },
@@ -71,7 +67,7 @@ const settings = useMemo(
     { label: "Profile", to: "/user/profile", disabled: false },
     { label: "Settings", to: "/user/settings", disabled: false },
     { label: "Dashboard", to: "/user/dashboard", disabled: false },
-    { label: "Logout", to: "/user/logout", disabled: false },
+    { label: "Logout", to: "/login", disabled: false },
   ],
   []
 );
@@ -86,11 +82,20 @@ const settings = useMemo(
   const openUser = (e: React.MouseEvent<HTMLElement>) => setUserEl(e.currentTarget);
   const closeUser = () => setUserEl(null);
 
+  const logoutMutation = useMutation({
+    mutationFn: async () => {
+      await api.post("/api/v1/auth/logout", {}, { withCredentials: true });
+    },
+    onSuccess: () => {
+      navigate("/login");
+    }
+  })
+
   // (Optional) hook up logout here later
-  const onSettingClick = () => {
+  const onSettingClick = (e:React.MouseEvent<HTMLAnchorElement, MouseEvent>, label:string) => {
     closeUser();
-    if (false) {
-      // TODO: call logout flow
+    if (label === "Logout") {
+      logoutMutation.mutate();
     }
   };
 
@@ -243,7 +248,7 @@ const settings = useMemo(
                 {settings.map((s) => (
                   <MenuItem
                     key={s.label}
-                    onClick={() => onSettingClick()}
+                    onClick={(e) => onSettingClick(e, s.label)}
                     disabled={s.disabled}
                     component={RouterLink}
                     to={s.to}

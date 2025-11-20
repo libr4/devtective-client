@@ -4,11 +4,7 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useNavigate, useParams } from 'react-router-dom';
 
-interface InvitePageProps {
-  inviteId: string;
-}
-
-const InvitePage: React.FC<InvitePageProps> = () => {
+const InvitePage = () => {
   const queryClient = useQueryClient();
   const {inviteId} = useParams();
   const navigate = useNavigate();

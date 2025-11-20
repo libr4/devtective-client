@@ -179,10 +179,8 @@ export default function NewProjectPage() {
   const wsLoading = workspacesQuery.isLoading || createWorkspaceMutation.isPending;
 
   function ensureSelfIsLeader(nextIds: string[]) {
-    console.log("222CURRENT USER ID:", currentUserId)
     if (!currentUserId) return nextIds;
     const ensuredList = nextIds.includes(currentUserId) ? nextIds : [currentUserId, ...nextIds];
-    console.log("ENSURED LIST:", ensuredList)
     return ensuredList;
   }
 
@@ -216,7 +214,6 @@ export default function NewProjectPage() {
       memberPublicIds: Array.from(new Set(members)),
       workspacePublicId: selectedWs.id, // NEW
     };
-    console.log("PAYLOAD:", payload)
 
     createMutation.mutate(payload);
   }
@@ -452,7 +449,7 @@ export default function NewProjectPage() {
                     {createMutation.isPending ? "Criando..." : "Criar projeto"}
                   </Button>
                 </Grid>
-                <Grid item xs={12} md="auto">
+                {/* <Grid item xs={12} md="auto">
                   <Tooltip
                     title="Crie o projeto primeiro para liberar o link (funcionalidade em breve)"
                     arrow
@@ -468,7 +465,7 @@ export default function NewProjectPage() {
                       </Button>
                     </span>
                   </Tooltip>
-                </Grid>
+                </Grid> */}
                 {createMutation.isError && (
                   <Grid item xs={12}>
                     <Typography color="error" variant="body2">
