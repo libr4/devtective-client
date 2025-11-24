@@ -104,7 +104,6 @@ const settings = useMemo(
     queryFn: async () => {
       
       const res = await api.get(`/api/v1/projects/${projectId}`, { withCredentials: true });
-      console.log("PROJECT QUERY DONE IN APP BAR: ", res.data)
       return res.data;
     },
     retry: 0,
@@ -113,7 +112,6 @@ const settings = useMemo(
 
   React.useEffect(() => {
     if (projectQuery.data) {
-      console.log("ASSIGNED CURRENT PROJECT APP BAR")
       setCurrentProject(projectQuery.data);
     }
   }, [projectQuery.data]);

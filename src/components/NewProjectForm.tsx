@@ -143,7 +143,6 @@ export default function NewProjectPage() {
   const createWorkspaceMutation = useMutation({
     mutationKey: ["create-workspace"],
     mutationFn: async (name: string) => {
-      console.log('MUTATION TRIGGERED!')
       const res = await api.post<{ id?: string; publicId?: string; name: string }>(
         "/api/v1/workspaces",
         { name },
@@ -163,7 +162,6 @@ export default function NewProjectPage() {
   // --- Helpers ---------------------------------------------------------------
   const allUsers = usersQuery.data ?? [];
   const currentUserId = meQuery.data?.publicId;
-  console.log("CURRENT USER ID:", currentUserId)
 
   const memberOptions = [...allUsers];
   // allUsers.push(meQuery?.data as User);
@@ -350,7 +348,6 @@ export default function NewProjectPage() {
                       value={leaderValue}
                       getOptionLabel={(o) => `${o.displayName as string} (${o.username as string})` || o.email || "Usuário"}
                       onChange={(_, value) => {
-                        console.log("AOSFHLJAHKLJ")
                         const next = value.map((v) => v.publicId);
                         setLeaders(ensureSelfIsLeader(next));
                       }}
@@ -395,7 +392,7 @@ export default function NewProjectPage() {
                       options={memberOptions}
                       value={memberValue}
                       getOptionLabel={(o) => `${o.displayName as string} (${o.username as string})` || o.email || "Usuário"}
-                      onChange={(_, value) => { console.log("VALUE:", value)
+                      onChange={(_, value) => { 
                         setMembers(value.map((v) => v.publicId))}}
                       disableCloseOnSelect
                       loading={usersQuery.isLoading}

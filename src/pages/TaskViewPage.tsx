@@ -43,8 +43,6 @@ export default function TaskViewPage() {
     );
   }
 
-  console.log('Taskres:', taskRes);
-
   return (
     <Box sx={{ display: 'flex', flexWrap: 'wrap',  mt:0, ml:0, }}>
         <TaskViewSecond taskData={taskRes}></TaskViewSecond>

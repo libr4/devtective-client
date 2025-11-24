@@ -17,7 +17,6 @@ type TaskGridProps = {
 export default function TaskGrid({ tasksQuery, columnVisibilityModel, 
         setSelection, selection, projectId, navigate }:TaskGridProps
 ) {
-    console.log("Rendering TaskGrid with tasks:", tasksQuery.data);
 
     const columns: GridColDef[] = [
     { field: "taskNumber", headerName: "ID", width: 90 },
@@ -79,7 +78,6 @@ export default function TaskGrid({ tasksQuery, columnVisibilityModel,
                 }}
                 
                 onRowClick={(params, event) => {
-                console.log("params:",params)
                 const target = event.target as HTMLElement;
                 if (target.closest(".MuiCheckbox-root")) return; // don't navigate on checkbox click
                 navigate(`/${projectId}/task/${params.row.taskNumber}`, { state: params.row });

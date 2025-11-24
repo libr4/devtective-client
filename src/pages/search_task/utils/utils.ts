@@ -13,7 +13,6 @@ export function fromParams(params: URLSearchParams) {
 }
 
 export function toParams(obj: Record<string, string[] | string | undefined>) {
-    console.log("TO PARAMS OBJ:", obj)
   const sp = new URLSearchParams();
   Object.entries(obj).forEach(([k, v]) => {
     if (typeof v === "string" && v.trim()) sp.set(k, v);

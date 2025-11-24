@@ -54,7 +54,6 @@ export default function SwitchableFieldSecond({
 
   const handleEdit = () => setEdit((prev) => ({ ...prev, [name]: true }));
   const handleClose = () => setEdit((prev) => ({ ...prev, [name]: false }));
-  console.log('STATE IN SWITCHABLE:', state, name, state[name as string]);
 
   // Date handling: keep a local Dayjs and mirror it to a hidden input named={name}
   const [dateVal, setDateVal] = React.useState<Dayjs | null>(() => {

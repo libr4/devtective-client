@@ -141,7 +141,6 @@ export default function TaskView() {
     let changes:ITaskUpdate["changes"] = prepareChanges(data);
 
     if (changes.length === 0 && data.note == '') {
-      console.log('empty')
       return;
     }
 

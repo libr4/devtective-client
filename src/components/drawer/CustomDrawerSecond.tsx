@@ -63,9 +63,6 @@ export default function CustomDrawerSecond() {
   );
 
   const activeMenu = (menus as Record<string, typeof menus.projects>)[currentScreen] ?? menus.projects;
-  console.log("CURRENT SCREEEN: ", currentScreen)
-  console.log("ACTIVE MENU: ", activeMenu)
-  console.log("MENUS: ", menus)
 
   return (
     <ThemeProvider theme={theme}>

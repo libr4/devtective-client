@@ -39,7 +39,6 @@ import FilterContainer from './FilterContainer';
 export default function SearchTaskForm() {
 
   const {projectId} = useParams();
-  console.log("projectid", projectId)
 
   const LABEL_WIDTH = 120;
   const LABEL_WIDTH_2 = 90;
@@ -77,7 +76,6 @@ const primary = {
   }
   const handleDeleteTasks = (e:React.FormEvent) => {
       e.preventDefault();
-      console.log("to be deleted: ", selected)
       deleteTasksMutation.mutate(selected);
       setDeleteClick(false);
       closeDialog();
@@ -167,13 +165,11 @@ const handleProjectUpdate = (newProject) => {
     event.preventDefault();
     const formData = new FormData(event.currentTarget);
     const data = Object.fromEntries(formData) as any;
-    console.log("data: ", data)
     const query = formToSearchQuery(data);
     setCustomQuery(query)
     setResult(true)
     triggerRefetchTasks(true)
     setSearchParams(query as Record<string, string[]>)
-    console.log("query: ", query)
   };
 
   // const customSearchQuery = useQuery({
@@ -186,9 +182,6 @@ const handleProjectUpdate = (newProject) => {
   //   enabled:Object.keys(customQuery).length !== 0
   // })
 
-  console.log("search params: ", searchParams)
-  console.log("useParams(): ", useParams());
-  
   return (
   <ThemeProvider theme={theme}>
     <Box 

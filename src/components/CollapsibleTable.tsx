@@ -54,7 +54,6 @@ function createData(name, status, type, priority, date, price) {
 function Row(props) {
   const { row, author, changes, currentTask } = props;
   const [open, setOpen] = React.useState(false);
-  console.log(row.changes.filter((e) => {return e.field === 'priority'})[0].newValue)
   const cellContent = {
     status:row.changes.filter((e) => {return e.field === 'status'})[0],
     type:row.changes.filter((e) => {return e.field === 'type'})[0],
@@ -130,7 +129,6 @@ export default function CollapsibleTable() {
 
   const rows = allActivitiesQuery.data || [];
   rows.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt))
-  console.log(rows)
 
   useEffect(() => {
     if (currentScreen !== 'tasks')
@@ -148,7 +146,6 @@ export default function CollapsibleTable() {
   if (allActivitiesQuery.isLoading) {
     return <CircularProgress></CircularProgress>
   }
-  console.log("allActivitiesQuery", allActivitiesQuery.data)
   return (
     <Box sx={{ 
       width:'80vw', 
@@ -174,7 +171,6 @@ export default function CollapsibleTable() {
           </TableHead>
           <TableBody sx={{height:'50px'}}>
             {rows.map((row) => {
-              console.log(row.note)
               return <Row key={row.name} author={row.author} createdAt={row.createdAt} currentTask={currentTask} changes={row.changes} row={row} />
             })}
           </TableBody>

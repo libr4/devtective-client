@@ -67,7 +67,6 @@ interface LoginData {
     try {
       const formData = await request.formData();
       const data = Object.fromEntries(formData);
-      console.log(data)
       await api.post('/api/v1/auth/register', data);
       return redirect('/login');
     } catch (error) {

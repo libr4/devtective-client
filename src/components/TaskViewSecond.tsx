@@ -72,8 +72,6 @@ export default function TaskViewSecond({taskData}: { taskData?: Task }) {
   const { projectId } = useParams();
   const { currentUser, setCurrentTask } = useAppContext();
 
-  console.log('TaskViewSecond state:', state, '\ntaskData:', taskData, 'projectId:', projectId);
-
   // Guard: if navigation landed here without state, avoid crashes.
   const task = taskData;
   useEffect(() => {

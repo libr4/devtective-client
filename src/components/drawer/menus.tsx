@@ -19,9 +19,9 @@ export const TASKS_MENU = (hasProject:boolean, projectId:string, ) =>
         icon: <SearchIcon color="primary" />,
       },
       {
-        label: "Filtros",
-        to: "#", // TODO
-        disabled: true,
+        label: "Projeto",
+        to: `/p/${projectId}`, // TODO
+        disabled: !hasProject,
         icon: <InboxIcon color="primary" />,
       },
       {

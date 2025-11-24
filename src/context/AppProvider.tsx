@@ -7,7 +7,6 @@ interface ContextApp {
 const AppContext = createContext({} as any);
 
 export default function AppProvider({children}) {
-  const sayHello = () => console.log("Hello context");
   const [projects, setProjects] = useState([]);
   const [currentProject, setCurrentProject] = useState(null);
   const [currentTask, setCurrentTask] = useState({});
@@ -16,7 +15,7 @@ export default function AppProvider({children}) {
   const [cardClicked, setCardClicked] = useState('');
   const [clickedElement, setClickedElement] = useState(null);
   return (
-    <AppContext.Provider value={{sayHello, projects, setProjects, 
+    <AppContext.Provider value={{projects, setProjects, 
       currentProject, setCurrentProject, 
       currentScreen, setCurrentScreen,
       currentUser, setCurrentUser,

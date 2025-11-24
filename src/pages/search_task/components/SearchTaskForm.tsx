@@ -31,6 +31,8 @@ import { FiltersDTO, TaskRow } from "../types/Task";
 import TaskGrid from "./TaskGrid";
 import { fetchTaskPriorities, fetchTaskStatus, fetchTaskTypes } from "../../common/queries";
 import { ProjectMember } from "../../common/types";
+import TaskToolbar from "./TaskToolbar";
+import SearchDrawer from "./SearchDrawer";
 
 // --- main page ---
 export default function SearchTaskFormSecond() {
@@ -105,12 +107,12 @@ const params = {
   });
 
   // In case lookups endpoint isn't available, derive member names from tasks once.
-  const memberFallback = React.useMemo(() => {
-    if (!tasksQuery.data) return [];
-    const set = new Set<string>();
-    tasksQuery.data.forEach((t) => (t.assignedToFullName ?? []).forEach((n) => set.add(n)));
-    return Array.from(set).sort();
-  }, [tasksQuery.data]);
+  // const memberFallback = React.useMemo(() => {
+  //   if (!tasksQuery.data) return [];
+  //   const set = new Set<string>();
+  //   tasksQuery.data.forEach((t) => (t.assignedToFullName ?? []).forEach((n) => set.add(n)));
+  //   return Array.from(set).sort();
+  // }, [tasksQuery.data]);
 
   const staleTimeMs = 5 * 60_000;
   const {
@@ -160,14 +162,22 @@ const params = {
     status.length ||
     technology.length;
 
-  const selectedAssignees = React.useMemo(() => {
-    const members = membersQuery.data || [];
-    const map = new Map<string, ProjectMember>(); 
-    members.forEach((m) => map.set(m.displayName, m));
-    return assignedTo
-      .map((name) => map.get(name))
-      .filter((m): m is ProjectMember => m !== undefined);
-  }, [membersQuery, assignedTo]); 
+  const drawerOptions = {
+    typeOptions,
+    priorityOptions,
+    statusOptions
+  }
+  const drawerValues = {
+    type,
+    priority,
+    status
+  }
+  const drawerSetters = {
+    setType,
+    setStatus,
+    setPriority,
+    setTechnology
+  }
 
   return (
     <Box sx={{ flexGrow: 1 }}>
@@ -201,7 +211,14 @@ const params = {
               renderInput={(params) => <TextField {...params} size="small" label="Assignees" />}
               sx={{ minWidth: { xs: "100%", md: 260 }, flex: { xs: "1 1 auto", md: "0 0 260px" } }}
             />
-            <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
+            <TaskToolbar 
+              setDrawerOpen={setDrawerOpen} 
+              clearAll={clearAll} 
+              hasAnyFilter={hasAnyFilter} 
+              tasksQuery={tasksQuery} 
+              deleteMutation={deleteMutation} 
+              selection={selection} />
+            {/* <Stack direction="row" spacing={1} sx={{ ml: { md: "auto" } }}>
               <Tooltip title="More filters">
                 <IconButton onClick={() => setDrawerOpen(true)}>
                   <FilterListIcon />
@@ -230,7 +247,7 @@ const params = {
                   </IconButton>
                 </span>
               </Tooltip>
-            </Stack>
+            </Stack> */}
           </Stack>
         </Paper>
 
@@ -247,6 +264,13 @@ const params = {
       </Container>
 
       {/* Filters Drawer */}
+      <SearchDrawer     
+        drawerOpen={drawerOpen}
+        setDrawerOpen={setDrawerOpen}
+        options={drawerOptions}
+        values={drawerValues}
+        setValues={drawerSetters}
+        clearAll={clearAll} />
       <Drawer anchor="right" open={drawerOpen} onClose={() => setDrawerOpen(false)}>
         <Box sx={{ width: { xs: 300, sm: 360, }, p: 2 }}>
           <Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ mb: 1 }}>
